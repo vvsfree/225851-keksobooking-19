@@ -79,30 +79,34 @@ function getRandomLengthArray(arr) {
  * @return {Object} объект объявления
  */
 function generateMockNoticeData(id, mapArea) {
-  var obj = {};
+  var author = {
+    avatar: 'img/avatars/user0' + id + '.png'
+  };
 
-  var author = {};
-  author.avatar = 'img/avatars/user0' + id + '.png';
-  obj.author = author;
+  var location = {
+    x: getRandomInt(mapArea.minX, mapArea.maxX),
+    y: getRandomInt(mapArea.minY, mapArea.maxY)
+  };
 
-  var location = {};
-  location.x = getRandomInt(mapArea.minX, mapArea.maxX);
-  location.y = getRandomInt(mapArea.minY, mapArea.maxY);
-  obj.location = location;
+  var offer = {
+    title: 'some offer #' + id,
+    address: location.x + ', ' + location.y,
+    price: getRandomInt(MIN_PRICE, MAX_PRICE),
+    type: getRandomValue(REALTY_TYPES),
+    rooms: getRandomInt(MIN_ROOMS, MAX_ROOMS),
+    guests: getRandomInt(MIN_GUESTS, MAX_GUESTS),
+    checkin: getRandomValue(CHECK_TIMES),
+    checkout: getRandomValue(CHECK_TIMES),
+    features: getRandomLengthArray(REALY_FEATURES),
+    description: 'some description #' + id,
+    photos: getRandomLengthArray(REALTY_PHOTOS)
+  };
 
-  var offer = {};
-  offer.title = 'some offer #' + id;
-  offer.address = location.x + ', ' + location.y;
-  offer.price = getRandomInt(MIN_PRICE, MAX_PRICE);
-  offer.type = getRandomValue(REALTY_TYPES);
-  offer.rooms = getRandomInt(MIN_ROOMS, MAX_ROOMS);
-  offer.guests = getRandomInt(MIN_GUESTS, MAX_GUESTS);
-  offer.checkin = getRandomValue(CHECK_TIMES);
-  offer.checkout = getRandomValue(CHECK_TIMES);
-  offer.features = getRandomLengthArray(REALY_FEATURES);
-  offer.description = 'some description #' + id;
-  offer.photos = getRandomLengthArray(REALTY_PHOTOS);
-  obj.offer = offer;
+  var obj = {
+    author: author,
+    offer: offer,
+    location: location
+  };
 
   return obj;
 }
