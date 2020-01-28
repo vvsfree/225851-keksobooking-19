@@ -17,6 +17,9 @@ var LOCATION_Y_MAX = 630;
 var MIN_PRICE = 100;
 var MAX_PRICE = 1000;
 
+// Валюта
+var CURRENCY = '₽';
+
 // Количество комнат
 var MIN_ROOMS = 1;
 var MAX_ROOMS = 7;
@@ -28,18 +31,39 @@ var MAX_GUESTS = 10;
 // Время заселения/выселения
 var CHECK_TIMES = ['12:00', '13:00', '14:00'];
 
-// Типы сдаваемого помещения
+// Типы сдаваемого жилья
 var REALTY_TYPES = ['palace', 'flat', 'house', 'bungalo'];
+var REALTY_TYPES_MAP = {
+  flat: 'Квартира',
+  bungalo: 'Бунгало',
+  house: 'Дом',
+  palace: 'Дворец'
+};
 
-// Особенности помещения
+// Удобства (особенности) жилья
 var REALY_FEATURES = ['wifi', 'dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
 
-// Фотографии помещения
+// Фотографии жилья
 var REALTY_PHOTOS = [
   'http://o0.github.io/assets/images/tokyo/hotel1.jpg',
   'http://o0.github.io/assets/images/tokyo/hotel2.jpg',
   'http://o0.github.io/assets/images/tokyo/hotel3.jpg'
 ];
+
+/**
+ * Форматирование строковых шаблонов
+ * В переданном шаблоне вхождения вида {n} заменяются на соответствующие по номеру (n) аргументы функции
+ * Аргументы обрабатываются с 1, т.к. нулевой аргумент - это сам шаблон
+ * Вызов функции: format('{1} + {2} = {3}', '10', '20', '30');
+ * @param {String} s - шаблон строки
+ * @return {String} отформатированная строка
+ */
+function format(s) {
+  for (var i = 1; i < arguments.length; i++) {
+    s = s.replace('{' + i + '}', arguments[i]);
+  }
+  return s;
+}
 
 /**
  * Возвращает случайное целое число между нижней и верхней границами включительно,
@@ -73,6 +97,19 @@ function getRandomLengthArray(arr) {
 }
 
 /**
+ * Перемешивание массива
+ * @param {Array} arr - массив объектов
+ * @return {Array} перемешанный массив
+ */
+function shuffle(arr) {
+  var shuffledArray = arr.slice();
+  shuffledArray.sort(function () {
+    return Math.random() - 0.5;
+  });
+  return shuffledArray;
+}
+
+/**
  * Создание объявления с тестовыми (фиктивными) данными
  * @param {Number} id - идентификатор объявления
  * @param {Object} mapArea - границы карты
@@ -97,9 +134,9 @@ function generateMockNoticeData(id, mapArea) {
     guests: getRandomInt(MIN_GUESTS, MAX_GUESTS),
     checkin: getRandomValue(CHECK_TIMES),
     checkout: getRandomValue(CHECK_TIMES),
-    features: getRandomLengthArray(REALY_FEATURES),
+    features: getRandomLengthArray(shuffle(REALY_FEATURES)),
     description: 'some description #' + id,
-    photos: getRandomLengthArray(REALTY_PHOTOS)
+    photos: getRandomLengthArray(shuffle(REALTY_PHOTOS))
   };
 
   var obj = {
@@ -152,7 +189,7 @@ function createPin(noticeData, template) {
  * @param {Array} data - массив данных объявлений
  * @return {DocumentFragment} фрагмент документа
  */
-function createDataFragment(data) {
+function createDocumentFragment(data) {
   var template = document.querySelector('#pin').content.querySelector('.map__pin');
   var fragment = document.createDocumentFragment();
   for (var i = 0; i < data.length; i++) {
@@ -160,6 +197,117 @@ function createDataFragment(data) {
   }
   return fragment;
 }
+
+/**
+ * Обработка удобств объявления
+ * Функция удаляет из DOM элементы popup__feature,
+ * БЭМ модификаторы которых не представлены в массиве данных удобств жилья.
+ * @param {HTMLElement} featuresElement - родительский блок popup__features
+ * @param {Array} featureArray - массив удобств жилья
+ */
+function processCardFeatures(featuresElement, featureArray) {
+  var className = '.popup__feature';
+  var selector = className;
+  // Формирование коллекции элементов, у которых нет соответствия с данными удобств
+  for (var i = 0; i < featureArray.length; i++) {
+    selector += format(':not({1}--{2})', className, featureArray[i]);
+  }
+  var features = featuresElement.querySelectorAll(selector);
+  // Найденная коллекция удаляется из DOM
+  features.forEach(function (item) {
+    item.remove();
+  });
+}
+
+/**
+ * Обработка фотографий объявления
+ * Функция создает DOM-элементы фото жилья, группирует их в DocumentFragment,
+ * и добавляет к родительскому блоку
+ * Для создания элемента фото используется шаблонный элемент, который уже находится в
+ * родительском блоке.
+ * @param {HTMLElement} photosElement - родительский блок popup__photos
+ * @param {Array} photoArray - массив фотографий жилья
+ */
+function processCardPhotos(photosElement, photoArray) {
+  // Первый дочерний элемент может служить шаблоном
+  var photoTemplate = photosElement.firstElementChild;
+  var fragment = document.createDocumentFragment();
+  for (var i = 0; i < photoArray.length; i++) {
+    // Создаем элемент фото
+    var photoElement = photoTemplate.cloneNode(true);
+    // Прописываем ему url изображения
+    photoElement.src = photoArray[i];
+    fragment.appendChild(photoElement);
+  }
+  photosElement.appendChild(fragment);
+  // Шаблонный элемент фото удаляется из DOM
+  photoTemplate.remove();
+}
+
+/**
+ * Создание DOM-элемента карточки объявления на основе переданного шаблона и данных объявления
+ * @param {Object} noticeData - объект данных объявления
+ * @return {HTMLElement} DOM-элемент карточки
+ */
+function createCard(noticeData) {
+  // Получаем шаблон карточки объявления
+  var template = document.querySelector('#card').content.querySelector('.popup');
+  // Создаем DOM-элемент карточки
+  var cardElement = template.cloneNode(true);
+
+  // Заполняем поля карточки
+
+  var offer = noticeData.offer;
+
+  // Заголовок объявления
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  // ... скрывается. Как? Можно просто весь элемент удалить. remove.
+  // Передавать функцию обработчик...
+  // Создать функцию, которая будет проверять наличие информации или ее полноту
+  cardElement.querySelector('.popup__title').textContent = offer.title;
+
+  // Адрес
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  cardElement.querySelector('.popup__text--address').textContent = offer.address;
+
+  // Цена аренды
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  cardElement.querySelector('.popup__text--price').firstChild.textContent = offer.price + CURRENCY;
+
+  // Тип жилья
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  cardElement.querySelector('.popup__type').textContent = REALTY_TYPES_MAP[offer.type];
+
+  // Количество гостей и комнат
+  // TODO: Как быть с падежами?
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  var capacity = format('{1} комнаты для {2} гостей', offer.rooms, offer.guests);
+  cardElement.querySelector('.popup__text--capacity').textContent = capacity;
+
+  // Время заезда и выезда
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  var time = format('Заезд после {1}, выезд до {2}', offer.checkin, offer.checkout);
+  cardElement.querySelector('.popup__text--time').textContent = time;
+
+  // Удобства (особенности) жилья
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  processCardFeatures(cardElement.querySelector('.popup__features'), offer.features);
+
+  // Описание объекта недвижимости
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  cardElement.querySelector('.popup__description').textContent = offer.description;
+
+  // Фотографии жилья
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  processCardPhotos(cardElement.querySelector('.popup__photos'), offer.photos);
+
+  // Аватар пользователя
+  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
+  cardElement.querySelector('.popup__avatar').src = noticeData.author.avatar;
+
+  return cardElement;
+}
+
 
 // Находим элемент карты
 var map = document.querySelector('.map');
@@ -175,6 +323,11 @@ var mapArea = {
 // Получаем массив данных объявлений
 var data = getNoticeData(mapArea);
 // Создаем фрагмент с метками и добавляем его на карту в список меток
-map.querySelector('.map__pins').appendChild(createDataFragment(data));
+map.querySelector('.map__pins').appendChild(createDocumentFragment(data));
 // Переключаем карту в активное состояние
 map.classList.remove('map--faded');
+
+// Создаем DOM-элемент карточки объявления
+var card = createCard(getRandomValue(data));
+// Добавляем его перед элементом фильтра
+map.querySelector('.map__filters-container').insertAdjacentElement('beforebegin', card);
