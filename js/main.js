@@ -199,7 +199,49 @@ function createDocumentFragment(data) {
 }
 
 /**
- * Обработка удобств объявления
+ * Проверка объекта на наличие значения
+ * Если это массив, то он должен быть непустым,
+ * также он не должен содержать пустых строк, нулей, null, undefined в качестве элементов
+ * @param {Object} value - может быть объектом или массивом
+ * @return {Boolean} значение есть / нет
+ */
+function isEmpty(value) {
+  if (Array.isArray(value)) {
+    return value.length === 0 || value.some(isEmpty);
+  }
+  return value === undefined || value === null || value === '' || value === 0;
+}
+
+/**
+ * В основном предназначена для изменения textContent DOM-элемента
+ * Также может менять src у HTMLImageElement
+ * Проверяет присваемое значение на существование
+ * В задании сказано, что если данных не хватает, то соответствующий блок должен скрываться.
+ * Это и повлекло все эти сложности - нужно единообразно проверять наличие данных и сокрытие блока.
+ * @param {HTMLElement} element - изменяемый DOM-элемент
+ * @param {String} value - присваемое значение
+ * @param {Object} formatFunction - функция форматирования значения
+ */
+function processElement(element, value, formatFunction) {
+  // Проверяем наличие данных
+  if (isEmpty(value)) {
+    element.remove();
+    return;
+  }
+  // Форматируем значение по необходимости
+  if (formatFunction) {
+    value = formatFunction(value);
+  }
+  // Вносим изменения в элемент
+  if (element instanceof HTMLImageElement) {
+    element.src = value;
+  } else {
+    element.textContent = value;
+  }
+}
+
+/**
+ * Обработка удобств (особенностей) в объявлении
  * Функция удаляет из DOM элементы popup__feature,
  * БЭМ модификаторы которых не представлены в массиве данных удобств жилья.
  * @param {HTMLElement} featuresElement - родительский блок popup__features
@@ -245,6 +287,23 @@ function processCardPhotos(photosElement, photoArray) {
 }
 
 /**
+ * Обработка коллекции DOM-элементов.
+ * Например, добавить все фотографии или удалить несколько удобств жилья.
+ * Функция необходима для единообразной проверки на полноту входных данных.
+ * Если входящий массив данных пустой, родитель удаляется из DOM.
+ * @param {HTMLElement} element - родитель изменяемых DOM-элементов
+ * @param {Array} values - массив данных
+ * @param {Object} procFunction - функция обработки DOM-элементов
+ */
+function processElements(element, values, procFunction) {
+  if (isEmpty(values)) {
+    element.remove();
+    return;
+  }
+  procFunction(element, values);
+}
+
+/**
  * Создание DOM-элемента карточки объявления на основе переданного шаблона и данных объявления
  * @param {Object} noticeData - объект данных объявления
  * @return {HTMLElement} DOM-элемент карточки
@@ -260,50 +319,48 @@ function createCard(noticeData) {
   var offer = noticeData.offer;
 
   // Заголовок объявления
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  // ... скрывается. Как? Можно просто весь элемент удалить. remove.
-  // Передавать функцию обработчик...
-  // Создать функцию, которая будет проверять наличие информации или ее полноту
-  cardElement.querySelector('.popup__title').textContent = offer.title;
+  processElement(cardElement.querySelector('.popup__title'), offer.title);
 
   // Адрес
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  cardElement.querySelector('.popup__text--address').textContent = offer.address;
+  processElement(cardElement.querySelector('.popup__text--address'), offer.address);
 
   // Цена аренды
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  cardElement.querySelector('.popup__text--price').firstChild.textContent = offer.price + CURRENCY;
+  processElement(cardElement.querySelector('.popup__text--price').firstChild, offer.price,
+      function (value) {
+        return value + CURRENCY;
+      });
 
   // Тип жилья
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  cardElement.querySelector('.popup__type').textContent = REALTY_TYPES_MAP[offer.type];
+  processElement(cardElement.querySelector('.popup__type'), offer.type,
+      function (value) {
+        return REALTY_TYPES_MAP[value];
+      });
 
   // Количество гостей и комнат
   // TODO: Как быть с падежами?
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  var capacity = format('{1} комнаты для {2} гостей', offer.rooms, offer.guests);
-  cardElement.querySelector('.popup__text--capacity').textContent = capacity;
+  processElement(cardElement.querySelector('.popup__text--capacity'), [offer.rooms, offer.guests],
+      function (value) {
+        return format('{1} комнаты для {2} гостей', value[0], value[1]);
+      }
+  );
 
   // Время заезда и выезда
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  var time = format('Заезд после {1}, выезд до {2}', offer.checkin, offer.checkout);
-  cardElement.querySelector('.popup__text--time').textContent = time;
+  processElement(cardElement.querySelector('.popup__text--time'), [offer.checkin, offer.checkout],
+      function (value) {
+        return format('Заезд после {1}, выезд до {2}', value[0], value[1]);
+      });
 
   // Удобства (особенности) жилья
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  processCardFeatures(cardElement.querySelector('.popup__features'), offer.features);
+  processElements(cardElement.querySelector('.popup__features'), offer.features, processCardFeatures);
 
   // Описание объекта недвижимости
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  cardElement.querySelector('.popup__description').textContent = offer.description;
+  processElement(cardElement.querySelector('.popup__description'), offer.description);
 
   // Фотографии жилья
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  processCardPhotos(cardElement.querySelector('.popup__photos'), offer.photos);
+  processElements(cardElement.querySelector('.popup__photos'), offer.photos, processCardPhotos);
 
   // Аватар пользователя
-  // TODO: Если данных для заполнения не хватает, соответствующий блок в карточке скрывается.
-  cardElement.querySelector('.popup__avatar').src = noticeData.author.avatar;
+  processElement(cardElement.querySelector('.popup__avatar'), noticeData.author.avatar);
 
   return cardElement;
 }
