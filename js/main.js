@@ -22,11 +22,11 @@ var CURRENCY = '₽';
 
 // Количество комнат
 var MIN_ROOMS = 1;
-var MAX_ROOMS = 7;
+var MAX_ROOMS = 100;
 
 // Количество гостей
 var MIN_GUESTS = 1;
-var MAX_GUESTS = 10;
+var MAX_GUESTS = 100;
 
 // Время заселения/выселения
 var CHECK_TIMES = ['12:00', '13:00', '14:00'];
@@ -63,6 +63,50 @@ function format(s) {
     s = s.replace('{' + i + '}', arguments[i]);
   }
   return s;
+}
+
+/**
+ * На основе переданного числа функция выбирает одно из 3х переданных слов
+ * Предполагается именительный падеж слов, единственное и множественное число
+ * Необходимо для формирования строк вида: 5 комнат, 3 комнаты, 101 комната
+ * @param {Number} num - целое положительное число
+ * @param {Array} arr - массив из 3х слов
+ * @return {String} элемент массива
+ */
+function getNominativeCase(num, arr) {
+  if (num % 10 === 1 && num % 100 !== 11) {
+    return arr[1];
+  } else if ([2, 3, 4].indexOf(num % 10) !== -1 && (num % 100 / 10 ^ 0) !== 1) {
+    return arr[2];
+  }
+  return arr[0];
+}
+
+/**
+ * На основе переданного числа функция выбирает одно из 2х переданных слов
+ * Предполагается родительный падеж (предлог "для") слов, единственное и множественное число
+ * Необходимо для формирования строк вида: (для) 1 гостя, 101 гостя, 11 гостей
+ * @param {Number} num - целое положительное число
+ * @param {Array} arr - массив из 2х слов
+ * @return {String} элемент массива
+ */
+function getGenitiveCase(num, arr) {
+  if (num % 10 === 1 && num % 100 !== 11) {
+    return arr[1];
+  }
+  return arr[0];
+}
+
+/**
+ * Формирование строки вида "5 комнат для 3 гостей".
+ * Учитывается падеж, единственное и множественное число существительного.
+ * @param {Array} values - массив из 2х целых чисел: [количество комнат, количество гостей]
+ * @return {String} отформатированная строка
+ */
+function formatCapacity(values) {
+  var roomWord = getNominativeCase(values[0], ['комнат', 'комната', 'комнаты']);
+  var guestWord = getGenitiveCase(values[1], ['гостей', 'гостя']);
+  return format('{1} {2} для {3} {4}', values[0], roomWord, values[1], guestWord);
 }
 
 /**
@@ -199,9 +243,9 @@ function createDocumentFragment(data) {
 }
 
 /**
- * Проверка объекта на наличие значения
- * Если это массив, то он должен быть непустым,
- * также он не должен содержать пустых строк, нулей, null, undefined в качестве элементов
+ * Проверка объекта на наличие значения:
+ * он не должен быть пустой строкой, нулем, null, undefined, NaN
+ * Если это массив, то он должен быть непустым, и каждый его элемент также проверяется.
  * @param {Object} value - может быть объектом или массивом
  * @return {Boolean} значение есть / нет
  */
@@ -209,13 +253,12 @@ function isEmpty(value) {
   if (Array.isArray(value)) {
     return value.length === 0 || value.some(isEmpty);
   }
-  return value === undefined || value === null || value === '' || value === 0;
+  return !value;
 }
 
 /**
- * В основном предназначена для изменения textContent DOM-элемента
+ * Изменяет textContent DOM-элемента и проверяет присваемое значение на существование
  * Также может менять src у HTMLImageElement
- * Проверяет присваемое значение на существование
  * В задании сказано, что если данных не хватает, то соответствующий блок должен скрываться.
  * Это и повлекло все эти сложности - нужно единообразно проверять наличие данных и сокрытие блока.
  * @param {HTMLElement} element - изменяемый DOM-элемент
@@ -236,7 +279,21 @@ function processElement(element, value, formatFunction) {
   if (element instanceof HTMLImageElement) {
     element.src = value;
   } else {
-    element.textContent = value;
+    /*
+    Здесь интересный момент. Есть элемент .popup__text--price.
+    У него нужно изменять только текст (цену) перед вложенным span.
+    К цене можно обратиться через firstChild элемента --price.
+    Если же цены в данных нет, то спрятать нужно весь --price, а не только firstChild (цену)
+    Для других элементов (которым необходимо менять textContent) это не нужно.
+    Но сам изменяемый текст этих элементов также размещается в .firstChild и может быть изменен
+    через textContent.
+    Таким образом для других элементов работают 2 варианта:
+    1) element.textContent = value;
+    2) element.firstChild.textContent = value;
+    Я выбирают второй вариант, чтобы еще захватить случай с .popup__text--price и т.о.
+    сделать обработку единообразной.
+    */
+    element.firstChild.textContent = value;
   }
 }
 
@@ -325,7 +382,7 @@ function createCard(noticeData) {
   processElement(cardElement.querySelector('.popup__text--address'), offer.address);
 
   // Цена аренды
-  processElement(cardElement.querySelector('.popup__text--price').firstChild, offer.price,
+  processElement(cardElement.querySelector('.popup__text--price'), offer.price,
       function (value) {
         return value + CURRENCY;
       });
@@ -337,17 +394,12 @@ function createCard(noticeData) {
       });
 
   // Количество гостей и комнат
-  // TODO: Как быть с падежами?
-  processElement(cardElement.querySelector('.popup__text--capacity'), [offer.rooms, offer.guests],
-      function (value) {
-        return format('{1} комнаты для {2} гостей', value[0], value[1]);
-      }
-  );
+  processElement(cardElement.querySelector('.popup__text--capacity'), [offer.rooms, offer.guests], formatCapacity);
 
   // Время заезда и выезда
   processElement(cardElement.querySelector('.popup__text--time'), [offer.checkin, offer.checkout],
-      function (value) {
-        return format('Заезд после {1}, выезд до {2}', value[0], value[1]);
+      function (values) {
+        return format('Заезд после {1}, выезд до {2}', values[0], values[1]);
       });
 
   // Удобства (особенности) жилья
