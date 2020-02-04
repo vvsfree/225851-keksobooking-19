@@ -453,25 +453,24 @@ function setFormsState(isDisabled) {
 }
 
 /**
- * Установка страницы (карта, фильтры, форма объявления) в активное состояние
+ * Установка страницы (карта, фильтры, форма объявления) в активное/неактивное состояние
  * @param {HTMLElement} map - элемент карты
+ * @param {Boolean} isDisabled - признак состояния true/false: неактивное (disabled) / активное
  */
-function setPageActiveState(map) {
-  if (map.classList.contains('map--faded')) {
-    map.classList.remove('map--faded');
-    setFormsState(false);
+function setPageState(map, isDisabled) {
+  if (isDisabled) {
+    // Установка в неактивное состояние
+    // Карта сразу же имеет --faded модификатор,
+    // в дальнейшем не предусматривается ее установка в неактивное состояние
+    // Поэтому меняются только формы
+    setFormsState(isDisabled);
+  } else {
+    // Установка в активное состояние
+    if (map.classList.contains('map--faded')) {
+      map.classList.remove('map--faded');
+      setFormsState(isDisabled);
+    }
   }
-}
-
-/**
- * Установка страницы (карта, фильтры, форма объявления) в неактивное состояние
- * @param {HTMLElement} map - элемент карты
- */
-function setPageDisabledState(map) {
-  if (!map.classList.contains('map--faded')) {
-    map.classList.add('map--faded');
-  }
-  setFormsState(true);
 }
 
 /**
@@ -534,7 +533,8 @@ function checkValidity(rooms, guests) {
  */
 function pinMousedownHandler(evt) {
   if (evt.button === 0) {
-    setPageActiveState(map);
+    // Установка страницы в активное состояние
+    setPageState(map, false);
     setAddress(pin, MAIN_PIN_LEG_HEIGHT);
     checkValidity(rooms, guests);
   }
@@ -546,7 +546,8 @@ function pinMousedownHandler(evt) {
  */
 function pinKeydownHandler(evt) {
   if (evt.key === 'Enter') {
-    setPageActiveState(map);
+    // Установка страницы в активное состояние
+    setPageState(map, false);
     setAddress(pin, MAIN_PIN_LEG_HEIGHT);
     checkValidity(rooms, guests);
   }
@@ -595,7 +596,7 @@ guests.addEventListener('change', capacityChangeHandler);
 
 // Установка страницы в неактивное состояние.
 // Страница и так уже в нем, но это состояние нуждается в доработке
-setPageDisabledState(map);
+setPageState(map, true);
 // Установка адреса главной метки
 setAddress(pin);
 
