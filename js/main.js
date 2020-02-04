@@ -458,19 +458,10 @@ function setFormsState(isDisabled) {
  * @param {Boolean} isDisabled - признак состояния true/false: неактивное (disabled) / активное
  */
 function setPageState(map, isDisabled) {
-  if (isDisabled) {
-    // Установка в неактивное состояние
-    // Карта сразу же имеет --faded модификатор,
-    // в дальнейшем не предусматривается ее установка в неактивное состояние
-    // Поэтому меняются только формы
-    setFormsState(isDisabled);
-  } else {
-    // Установка в активное состояние
-    if (map.classList.contains('map--faded')) {
-      map.classList.remove('map--faded');
-      setFormsState(isDisabled);
-    }
+  if (!isDisabled) {
+    map.classList.remove('map--faded');
   }
+  setFormsState(isDisabled);
 }
 
 /**
@@ -496,8 +487,8 @@ function setAddress(pin, legHeight) {
 
 /**
  * Проверка соответствия количества гостей (спальных мест) с количеством комнат
- * @param {String} rooms - количество комнат
- * @param {String} guests - количество гостей
+ * @param {HTMLElement} rooms - количество комнат
+ * @param {HTMLElement} guests - количество гостей
  */
 function checkValidity(rooms, guests) {
   guests.setCustomValidity('');
@@ -528,27 +519,17 @@ function checkValidity(rooms, guests) {
 }
 
 /**
- * Обработчик нажатия мыши на главную метку карты
- * @param {Event} evt - объект события
+ * Обработчик событий для главной метки карты
  */
-function pinMousedownHandler(evt) {
-  if (evt.button === 0) {
-    // Установка страницы в активное состояние
+function processPinAction() {
+  // Установка страницы в активное состояние
+  // Срабатывает однократно
+  if (map.classList.contains('map--faded')) {
     setPageState(map, false);
     setAddress(pin, MAIN_PIN_LEG_HEIGHT);
-    checkValidity(rooms, guests);
-  }
-}
-
-/**
- * Обработчик нажатия клавиши Enter на главной метке карты
- * @param {Event} evt - объект события
- */
-function pinKeydownHandler(evt) {
-  if (evt.key === 'Enter') {
-    // Установка страницы в активное состояние
-    setPageState(map, false);
-    setAddress(pin, MAIN_PIN_LEG_HEIGHT);
+    // По умолчанию значения этих полей не соответствуют друг другу
+    // Эта проверка делает поле "Количество мест" невалидным сразу после активации формы
+    // Далее поля проверяются уже по событию change
     checkValidity(rooms, guests);
   }
 }
@@ -587,8 +568,18 @@ var rooms = notice.querySelector('#room_number');
 var guests = notice.querySelector('#capacity');
 
 // Добавление обработчиков событий для метки карты
-pin.addEventListener('mousedown', pinMousedownHandler);
-pin.addEventListener('keydown', pinKeydownHandler);
+pin.addEventListener('mousedown', function (evt) {
+  if (evt.button === 0) {
+    processPinAction();
+  }
+});
+
+pin.addEventListener('keydown', function (evt) {
+  if (evt.key === 'Enter') {
+    processPinAction();
+  }
+});
+
 
 // Добавление обработчиков событий для комнат и гостей
 rooms.addEventListener('change', capacityChangeHandler);
