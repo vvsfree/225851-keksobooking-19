@@ -6,6 +6,8 @@ var NOTICE_COUNT = 8;
 // Размеры метки на карте
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
+// Длина ножки главной метки
+var MAIN_PIN_LEG_HEIGHT = 16;
 
 // Разброс значений координат метки
 // Максимальное значение по X определяется из ширины окна (viewport)
@@ -417,6 +419,126 @@ function createCard(noticeData) {
   return cardElement;
 }
 
+/**
+ * Установка активного/неактивного состояния 2х форм: ad-form и map__filters
+ * @param {Boolean} isDisabled - true: устанавливается неактивное состояние; false: активное
+ */
+function setFormsState(isDisabled) {
+  // Форма объявления
+  var adForm = document.querySelector('.ad-form');
+
+  if (isDisabled) {
+    if (!adForm.classList.contains('ad-form--disabled')) {
+      adForm.classList.add('ad-form--disabled');
+    }
+  } else {
+    adForm.classList.remove('ad-form--disabled');
+  }
+
+  // fieldsets формы устанавливаются в необходимое состояние
+  var addFormElements = adForm.querySelectorAll('.ad-form__element');
+  addFormElements.forEach(function (item) {
+    item.disabled = isDisabled;
+  });
+
+  // Форма с фильтрами на карте
+  var filterForm = document.querySelector('.map__filters');
+  // selects фильтра устанавливаются в необходимое состояние
+  var filterFormSelects = filterForm.querySelectorAll('.map__filter');
+  filterFormSelects.forEach(function (item) {
+    item.disabled = isDisabled;
+  });
+  // fieldset фильтра устанавливается в необходимое состояние
+  filterForm.querySelector('.map__features').disabled = isDisabled;
+}
+
+/**
+ * Установка страницы (карта, фильтры, форма объявления) в активное/неактивное состояние
+ * @param {HTMLElement} map - элемент карты
+ * @param {Boolean} isDisabled - признак состояния true/false: неактивное (disabled) / активное
+ */
+function setPageState(map, isDisabled) {
+  if (!isDisabled) {
+    map.classList.remove('map--faded');
+  }
+  setFormsState(isDisabled);
+}
+
+/**
+ * Вычисление местоположения метки и установка адреса
+ * Если длина ножки не передана, то считается что метка круглая и ее координаты есть ее центр
+ * Если длина ножки передана, то координата метки - точка, куда указывает острие ножки
+ * Предполагается, что по горизонтали ножка находится посредине метки
+ * Полученные координаты присваиваются элементу #address
+ * @param {HTMLElement} pin - главная метка на карте
+ * @param {Number} legHeight - длина ножки метки
+ */
+function setAddress(pin, legHeight) {
+  var hShift = Math.floor(pin.offsetWidth / 2);
+  var vShift = 0;
+  if (legHeight) {
+    vShift = pin.offsetHeight + legHeight;
+  } else {
+    vShift = Math.floor(pin.offsetHeight / 2);
+  }
+  var address = document.querySelector('#address');
+  address.value = (pin.offsetLeft + hShift) + ', ' + (pin.offsetTop + vShift);
+}
+
+/**
+ * Проверка соответствия количества гостей (спальных мест) и количества комнат
+ * @param {HTMLElement} rooms - количество комнат
+ * @param {HTMLElement} guests - количество гостей
+ */
+function checkCapacity(rooms, guests) {
+  guests.setCustomValidity('');
+  switch (rooms.value) {
+    case '1':
+      if (guests.value !== '1') {
+        guests.setCustomValidity('Для одной комнаты может быть только 1 гость');
+      }
+      break;
+    case '2':
+      if (['1', '2'].indexOf(guests.value) === -1) {
+        guests.setCustomValidity('Для двух комнат гостей может быть 1 или 2');
+      }
+      break;
+    case '3':
+      if (guests.value === '0') {
+        guests.setCustomValidity('Для трех комнат гостей может быть от 1 до 3');
+      }
+      break;
+    case '100':
+      if (guests.value !== '0') {
+        guests.setCustomValidity('100 комнат не для гостей');
+      }
+      break;
+    default:
+      guests.setCustomValidity('Невозможно определить количество гостей');
+  }
+}
+
+/**
+ * Обработчик события click для главной метки карты
+ * Т.к. метка это кнопка, то нажатие на Enter сработает также
+ */
+function processPinAction() {
+  // Установка страницы в активное состояние
+  setPageState(map, false);
+  setAddress(pin, MAIN_PIN_LEG_HEIGHT);
+  // По умолчанию значения этих полей не соответствуют друг другу
+  // Эта проверка делает поле "Количество мест" невалидным сразу после активации формы
+  // Далее поля проверяются уже по событию change
+  checkCapacity(rooms, guests);
+}
+
+/**
+ * Обработчик события change
+ * Используется для полей "Количество комнат" и "Количество мест"
+ */
+function capacityChangeHandler() {
+  checkCapacity(rooms, guests);
+}
 
 // Находим элемент карты
 var map = document.querySelector('.map');
@@ -431,12 +553,46 @@ var mapArea = {
 
 // Получаем массив данных объявлений
 var data = getNoticeData(mapArea);
+
+// Главная метка карты
+var pin = map.querySelector('.map__pin--main');
+
+// Блок объявления
+var notice = document.querySelector('.notice');
+
+// Поле количества комнат
+var rooms = notice.querySelector('#room_number');
+// Поле количества мест (гостей)
+var guests = notice.querySelector('#capacity');
+
+// Добавление обработчика события для главной метки
+pin.addEventListener('click', function pinClickHandler() {
+  processPinAction();
+  // Удаляем обработчик, т.о. он сработает однократно
+  pin.removeEventListener('click', pinClickHandler);
+  // Задел на будущее, повесим сюда перехват mousedown
+  // pin.addEventListener('mousedown', movePin);
+});
+
+
+// Добавление обработчиков событий для комнат и гостей
+rooms.addEventListener('change', capacityChangeHandler);
+guests.addEventListener('change', capacityChangeHandler);
+
+// Установка страницы в неактивное состояние.
+// Страница и так уже в нем, но это состояние нуждается в доработке
+setPageState(map, true);
+// Установка адреса главной метки
+setAddress(pin);
+
 // Создаем фрагмент с метками и добавляем его на карту в список меток
-map.querySelector('.map__pins').appendChild(createDocumentFragment(data));
-// Переключаем карту в активное состояние
-map.classList.remove('map--faded');
+// map.querySelector('.map__pins').appendChild(createDocumentFragment(data));
+// Временно, до 2ой части задания, чтобы не ругался ESLinter и не пришлось много комментировать
+createDocumentFragment(data);
 
 // Создаем DOM-элемент карточки объявления
-var card = createCard(getRandomValue(data));
+// var card = createCard(getRandomValue(data));
+// Временно, до 2ой части задания, чтобы не ругался ESLinter и не пришлось много комментировать
+createCard(getRandomValue(data));
 // Добавляем его перед элементом фильтра
-map.querySelector('.map__filters-container').insertAdjacentElement('beforebegin', card);
+// map.querySelector('.map__filters-container').insertAdjacentElement('beforebegin', card);
