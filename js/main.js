@@ -448,7 +448,7 @@ function setFormsState(isDisabled) {
   filterFormSelects.forEach(function (item) {
     item.disabled = isDisabled;
   });
-  // fielset фильтра устанавливается в необходимое состояние
+  // fieldset фильтра устанавливается в необходимое состояние
   filterForm.querySelector('.map__features').disabled = isDisabled;
 }
 
@@ -486,11 +486,11 @@ function setAddress(pin, legHeight) {
 }
 
 /**
- * Проверка соответствия количества гостей (спальных мест) с количеством комнат
+ * Проверка соответствия количества гостей (спальных мест) и количества комнат
  * @param {HTMLElement} rooms - количество комнат
  * @param {HTMLElement} guests - количество гостей
  */
-function checkValidity(rooms, guests) {
+function checkCapacity(rooms, guests) {
   guests.setCustomValidity('');
   switch (rooms.value) {
     case '1':
@@ -519,19 +519,17 @@ function checkValidity(rooms, guests) {
 }
 
 /**
- * Обработчик событий для главной метки карты
+ * Обработчик события click для главной метки карты
+ * Т.к. метка это кнопка, то нажатие на Enter сработает также
  */
 function processPinAction() {
   // Установка страницы в активное состояние
-  // Срабатывает однократно
-  if (map.classList.contains('map--faded')) {
-    setPageState(map, false);
-    setAddress(pin, MAIN_PIN_LEG_HEIGHT);
-    // По умолчанию значения этих полей не соответствуют друг другу
-    // Эта проверка делает поле "Количество мест" невалидным сразу после активации формы
-    // Далее поля проверяются уже по событию change
-    checkValidity(rooms, guests);
-  }
+  setPageState(map, false);
+  setAddress(pin, MAIN_PIN_LEG_HEIGHT);
+  // По умолчанию значения этих полей не соответствуют друг другу
+  // Эта проверка делает поле "Количество мест" невалидным сразу после активации формы
+  // Далее поля проверяются уже по событию change
+  checkCapacity(rooms, guests);
 }
 
 /**
@@ -539,7 +537,7 @@ function processPinAction() {
  * Используется для полей "Количество комнат" и "Количество мест"
  */
 function capacityChangeHandler() {
-  checkValidity(rooms, guests);
+  checkCapacity(rooms, guests);
 }
 
 // Находим элемент карты
@@ -567,17 +565,13 @@ var rooms = notice.querySelector('#room_number');
 // Поле количества мест (гостей)
 var guests = notice.querySelector('#capacity');
 
-// Добавление обработчиков событий для метки карты
-pin.addEventListener('mousedown', function (evt) {
-  if (evt.button === 0) {
-    processPinAction();
-  }
-});
-
-pin.addEventListener('keydown', function (evt) {
-  if (evt.key === 'Enter') {
-    processPinAction();
-  }
+// Добавление обработчика события для главной метки
+pin.addEventListener('click', function pinClickHandler() {
+  processPinAction();
+  // Удаляем обработчик, т.о. он сработает однократно
+  pin.removeEventListener('click', pinClickHandler);
+  // Задел на будущее, повесим сюда перехват mousedown
+  // pin.addEventListener('mousedown', movePin);
 });
 
 
