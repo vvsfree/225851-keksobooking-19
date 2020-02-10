@@ -2,19 +2,14 @@
 
 (function () {
   // Импорт функций из других модулей
-  var getNoticeData = window.data.getNoticeData;
+  var showErrorMsg = window.util.showErrorMsg;
+  var load = window.backend.load;
   var createPins = window.pin.createPins;
   var createCard = window.card.createCard;
   var setAddress = window.form.setAddress;
 
   // Длина ножки главной метки
   var MAIN_PIN_LEG_HEIGHT = 16;
-
-  // Разброс значений координат метки
-  // Максимальное значение по X определяется из ширины окна (viewport)
-  var LOCATION_X_MIN = 0;
-  var LOCATION_Y_MIN = 130;
-  var LOCATION_Y_MAX = 630;
 
   /**
    * Вычисление местоположения главной метки
@@ -100,18 +95,15 @@
     }
   }
 
-  /**
-   * Обработчик события click по блоку map__pins
-   * @param {Event} evt - событие click
-   * @param {Array} data - массив данных объявлений
-   */
-  function mapPinsClickHandler(evt, data) {
-    var pin = evt.target.closest('.map__pin:not(.map__pin--main)');
-    if (!pin) {
-      return;
-    }
-    // Отображаем карточку, заполняем ее данными по id, который содержится в элементе карточки
-    placeCard(data[pin.dataset.id]);
+  function successHandler(data) {
+    // Блок меток
+    var mapPins = map.querySelector('.map__pins');
+
+    // Создаем фрагмент с метками и добавляем его на карту в блок меток
+    mapPins.appendChild(createPins(data, placeCard));
+
+    // Отображаем карточку первого объявления
+    placeCard(data[0]);
   }
 
   /**
@@ -122,31 +114,8 @@
     // Активируем фильтр карты
     setFilterState(true);
 
-    // Определяем область видимости карты
-    var mapArea = {
-      minX: LOCATION_X_MIN,
-      maxX: map.offsetWidth,
-      minY: LOCATION_Y_MIN,
-      maxY: LOCATION_Y_MAX
-    };
-
     // Получаем массив данных объявлений
-    var data = getNoticeData(mapArea);
-
-    // Блок меток
-    var mapPins = map.querySelector('.map__pins');
-
-    // Создаем фрагмент с метками и добавляем его на карту в блок меток
-    mapPins.appendChild(createPins(data));
-
-    // Добавляем обработчик события click на блок меток
-    // Используется принцип делегирования, у всех (не главных) меток только один обработчик
-    mapPins.addEventListener('click', function (evt) {
-      mapPinsClickHandler(evt, data);
-    });
-
-    // Отображаем карточку первого объявления
-    placeCard(data[0]);
+    load(successHandler, showErrorMsg);
 
     // Установка адреса в форме по координатам главной метки
     setAddress(getMainPinCoords());

@@ -7,17 +7,12 @@
 
   /**
    * Создание DOM-элемента метки на основе переданного шаблона и данных объявления
-   * @param {Number} id - идентификатор объявления
    * @param {Object} noticeData - объект данных объявления
    * @param {HTMLElement} template - шаблон метки карты
    * @return {HTMLElement} DOM-элемент метки
    */
-  function createPin(id, noticeData, template) {
+  function createPin(noticeData, template) {
     var pinElement = template.cloneNode(true);
-
-    // Установка идентификатора объявления через атрибут data-id
-    // Используется для связи метки и данных объявления
-    pinElement.dataset.id = id;
 
     // Определяем местоположение метки на карте
     var x = noticeData.location.x - PIN_WIDTH / 2;
@@ -33,17 +28,38 @@
   }
 
   /**
+   * Добавляем обработчик на клик
+   * Объект данных сохраняется в замыкании, т.о. скрываем полученные данные
+   * @param {HTMLElement} pin - метка карты
+   * @param {Object} dataObject - объект данных объявления
+   * @param {Function} clickHandler - обработчик клика
+   */
+  function addPinClickHandler(pin, dataObject, clickHandler) {
+    pin.addEventListener('click', function () {
+      clickHandler(dataObject);
+    });
+  }
+
+  /**
    * Функция создает DOM-элементы меток и формирует из них фрагмент документа
    * Метки создаются на основе шаблона #pin
    * Свойства меток инициализируются из переданного массива данных
    * @param {Array} data - массив данных объявлений
+   * @param {Function} pinClickHandler - обработчик клика на метку
    * @return {DocumentFragment} фрагмент документа
    */
-  function createPins(data) {
+  function createPins(data, pinClickHandler) {
     var template = document.querySelector('#pin').content.querySelector('.map__pin');
     var fragment = document.createDocumentFragment();
+
     for (var i = 0; i < data.length; i++) {
-      fragment.appendChild(createPin(i, data[i], template));
+      // ТЗ 5.2. Если в объекте с описанием объявления отсутствует поле offer, то метка объявления не должна отображаться на карте.
+      if (data[i].offer !== undefined) {
+        var pin = createPin(data[i], template);
+        // Добавляем обработчик на click
+        addPinClickHandler(pin, data[i], pinClickHandler);
+        fragment.appendChild(pin);
+      }
     }
     return fragment;
   }
