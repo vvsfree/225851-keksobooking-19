@@ -29,10 +29,10 @@
 
   /**
    * Добавляем обработчик на клик
-   * Объект данных сохраняется в замыкании
+   * Объект данных сохраняется в замыкании, т.о. скрываем полученные данные
    * @param {HTMLElement} pin - метка карты
    * @param {Object} dataObject - объект данных объявления
-   * @param {Object} clickHandler - обработчик клика
+   * @param {Function} clickHandler - обработчик клика
    */
   function addPinClickHandler(pin, dataObject, clickHandler) {
     pin.addEventListener('click', function () {
@@ -45,7 +45,7 @@
    * Метки создаются на основе шаблона #pin
    * Свойства меток инициализируются из переданного массива данных
    * @param {Array} data - массив данных объявлений
-   * @param {Object} pinClickHandler - обработчик клика на метку
+   * @param {Function} pinClickHandler - обработчик клика на метку
    * @return {DocumentFragment} фрагмент документа
    */
   function createPins(data, pinClickHandler) {
@@ -53,11 +53,13 @@
     var fragment = document.createDocumentFragment();
 
     for (var i = 0; i < data.length; i++) {
-      var pin = createPin(data[i], template);
-      // Добавляем обработчик на click
-      addPinClickHandler(pin, data[i], pinClickHandler);
-
-      fragment.appendChild(pin);
+      // ТЗ 5.2. Если в объекте с описанием объявления отсутствует поле offer, то метка объявления не должна отображаться на карте.
+      if (data[i].offer !== undefined) {
+        var pin = createPin(data[i], template);
+        // Добавляем обработчик на click
+        addPinClickHandler(pin, data[i], pinClickHandler);
+        fragment.appendChild(pin);
+      }
     }
     return fragment;
   }

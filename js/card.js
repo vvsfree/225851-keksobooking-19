@@ -91,7 +91,7 @@
    * Это и повлекло все эти сложности - нужно единообразно проверять наличие данных и сокрытие блока.
    * @param {HTMLElement} element - изменяемый DOM-элемент
    * @param {String} value - присваемое значение
-   * @param {Object} formatFunction - функция форматирования значения
+   * @param {Function} formatFunction - функция форматирования значения
    */
   function processElement(element, value, formatFunction) {
     // Проверяем наличие данных
@@ -178,7 +178,7 @@
    * Если входящий массив данных пустой, родитель удаляется из DOM.
    * @param {HTMLElement} element - родитель изменяемых DOM-элементов
    * @param {Array} values - массив данных
-   * @param {Object} procFunction - функция обработки DOM-элементов
+   * @param {Function} procFunction - функция обработки DOM-элементов
    */
   function processElements(element, values, procFunction) {
     if (isEmpty(values)) {
