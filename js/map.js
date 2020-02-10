@@ -101,20 +101,6 @@
   }
 
   /**
-   * Обработчик события click по блоку map__pins
-   * @param {Event} evt - событие click
-   * @param {Array} data - массив данных объявлений
-   */
-  function mapPinsClickHandler(evt, data) {
-    var pin = evt.target.closest('.map__pin:not(.map__pin--main)');
-    if (!pin) {
-      return;
-    }
-    // Отображаем карточку, заполняем ее данными по id, который содержится в элементе карточки
-    placeCard(data[pin.dataset.id]);
-  }
-
-  /**
    * Активируем карту
    */
   function activateMap() {
@@ -137,13 +123,7 @@
     var mapPins = map.querySelector('.map__pins');
 
     // Создаем фрагмент с метками и добавляем его на карту в блок меток
-    mapPins.appendChild(createPins(data));
-
-    // Добавляем обработчик события click на блок меток
-    // Используется принцип делегирования, у всех (не главных) меток только один обработчик
-    mapPins.addEventListener('click', function (evt) {
-      mapPinsClickHandler(evt, data);
-    });
+    mapPins.appendChild(createPins(data, placeCard));
 
     // Отображаем карточку первого объявления
     placeCard(data[0]);
