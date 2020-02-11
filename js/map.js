@@ -6,33 +6,6 @@
   var load = window.backend.load;
   var createPins = window.pin.createPins;
   var createCard = window.card.createCard;
-  var setAddress = window.form.setAddress;
-
-  // Длина ножки главной метки
-  var MAIN_PIN_LEG_HEIGHT = 16;
-
-  /**
-   * Вычисление местоположения главной метки
-   * Если метка круглая, то ее координаты есть ее центр
-   * Если метка с ножкой, то координата метки - точка, куда указывает острие ножки
-   * Предполагается, что по горизонтали ножка находится посредине метки
-   * @param {String} pinType - тип метки: round - круглая; все остальное, включая отсутствие параметра - с ножкой
-   * @return {Object} - координаты метки (x, y)
-   */
-  function getMainPinCoords(pinType) {
-    var mainPin = document.querySelector('.map__pin--main');
-    var hShift = Math.floor(mainPin.offsetWidth / 2);
-    var vShift = 0;
-    if (pinType === 'round') {
-      vShift = Math.floor(mainPin.offsetHeight / 2);
-    } else {
-      vShift = mainPin.offsetHeight + MAIN_PIN_LEG_HEIGHT;
-    }
-    return {
-      x: mainPin.offsetLeft + hShift,
-      y: mainPin.offsetTop + vShift
-    };
-  }
 
   /**
    * Установка активного/неактивного состояния фильтра карты map__filters
@@ -95,6 +68,10 @@
     }
   }
 
+  /**
+   * Обработка успешного получения массива данных похожих объявлений
+   * @param {Array} data - массив объектов данных
+   */
   function successHandler(data) {
     // Блок меток
     var mapPins = map.querySelector('.map__pins');
@@ -110,24 +87,27 @@
    * Активируем карту
    */
   function activateMap() {
+    // Убираем темный экран
     map.classList.remove('map--faded');
+
     // Активируем фильтр карты
     setFilterState(true);
 
     // Получаем массив данных объявлений
     load(successHandler, showErrorMsg);
-
-    // Установка адреса в форме по координатам главной метки
-    setAddress(getMainPinCoords());
   }
 
   /**
    * Установка карты в неактивное состояние
    */
   function deactivateMap() {
+    // Добавляем темный экран, если его нет
+    if (!map.classList.contains('map--faded')) {
+      map.classList.remove('map--faded');
+    }
+
+    // Деактивируем фильтр карты
     setFilterState(false);
-    // Установка адреса в форме по координатам главной метки
-    setAddress(getMainPinCoords('round'));
   }
 
   // Инициализация переменных необходимых для работы модуля
