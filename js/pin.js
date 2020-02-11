@@ -35,7 +35,8 @@
    * @param {Function} clickHandler - обработчик клика
    */
   function addPinClickHandler(pin, dataObject, clickHandler) {
-    pin.addEventListener('click', function () {
+    pin.addEventListener('click', function (evt) {
+      evt.preventDefault();
       clickHandler(dataObject);
     });
   }
