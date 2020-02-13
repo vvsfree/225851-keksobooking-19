@@ -8,7 +8,7 @@
    * Обработчик нажатия Escape на всем документе
    * @param {Event} evt - событие
    */
-  function keydownHandler(evt) {
+  function keydownEscHandler(evt) {
     if (evt.key === 'Escape') {
       removePopup(evt);
     }
@@ -33,7 +33,7 @@
   function removePopup(evt) {
     evt.stopPropagation();
     document.querySelector('.' + DIALOG_CLASS_NAME).remove();
-    document.removeEventListener('keydown', keydownHandler);
+    document.removeEventListener('keydown', keydownEscHandler);
     document.removeEventListener('click', clickHandler);
   }
 
@@ -53,7 +53,7 @@
     dialog.classList.add(DIALOG_CLASS_NAME);
 
     // События закрытия диалога уровня документа
-    document.addEventListener('keydown', keydownHandler);
+    document.addEventListener('keydown', keydownEscHandler);
     document.addEventListener('click', clickHandler);
 
     // Добавляем в DOM

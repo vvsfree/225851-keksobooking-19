@@ -1,11 +1,6 @@
 'use strict';
 
 (function () {
-  // Импорт функций из других модулей
-  var activateMap = window.map.activateMap;
-  var activateForm = window.form.activateForm;
-  var setAddress = window.form.setAddress;
-
   // Длина ножки главной метки
   var MAIN_PIN_LEG_HEIGHT = 16;
 
@@ -14,6 +9,16 @@
   var LOCATION_X_MIN = 0;
   var LOCATION_Y_MIN = 130;
   var LOCATION_Y_MAX = 630;
+
+  // Импорт функций из других модулей
+  var activateMap = window.map.activateMap;
+  var activateForm = window.form.activateForm;
+  var setAddress = window.form.setAddress;
+
+  // Инициализация переменных необходимых для работы модуля
+
+  // Главная метка карты
+  var mainPin = document.querySelector('.map__pin--main');
 
   /**
    * Вычисление координат главной метки
@@ -26,12 +31,12 @@
    */
   function getCoords(position) {
     var coords = {};
-    if (position === undefined) {
-      coords.x = mainPin.offsetLeft;
-      coords.y = mainPin.offsetTop;
-    } else {
+    if (position) {
       coords.x = position.x;
       coords.y = position.y;
+    } else {
+      coords.x = mainPin.offsetLeft;
+      coords.y = mainPin.offsetTop;
     }
     // Смещение по горизонтали
     coords.x += Math.floor(mainPin.offsetWidth / 2);
@@ -68,9 +73,10 @@
   }
 
   /**
-   * Корректируем возможную позицию метки так, чтобы ее острие ее ножки не вылезало за пределы карты
+   * Корректируем возможную позицию метки так, чтобы острие ее ножки не вылезало за пределы карты
    * @param {Object} position - позиция элемента метки (left, top)
    * @param {Number} mapWidth - ширина карты
+   * @return {Object} скорректированная позиция элемента метки (left, top)
    */
   function correctPinPosition(position, mapWidth) {
     // Новые возможные координаты метки (x, y)
@@ -89,6 +95,7 @@
     } else if (coords.y > LOCATION_Y_MAX) {
       position.y += (LOCATION_Y_MAX - coords.y);
     }
+    return position;
   }
 
   /**
@@ -136,7 +143,7 @@
       };
 
       // Корректируем возможную позицию метки
-      correctPinPosition(pinPosition, mapWidth);
+      pinPosition = correctPinPosition(pinPosition, mapWidth);
 
       // Перемещаем метку задавая ей новую позицию на карте
       mainPin.style.left = pinPosition.x + 'px';
@@ -163,11 +170,6 @@
     document.addEventListener('mousemove', mouseMoveHandler);
     document.addEventListener('mouseup', mouseUpHandler);
   }
-
-  // Инициализация переменных необходимых для работы модуля
-
-  // Главная метка карты
-  var mainPin = document.querySelector('.map__pin--main');
 
   // Экспорт функций модуля
   window.mainPin = {

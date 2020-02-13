@@ -7,6 +7,11 @@
   var createPins = window.pin.createPins;
   var createCard = window.card.createCard;
 
+  // Инициализация переменных необходимых для работы модуля
+
+  // Элемент карты
+  var map = document.querySelector('.map');
+
   /**
    * Установка активного/неактивного состояния фильтра карты map__filters
    * @param {Boolean} isActive - true: устанавливается активное состояние; false: неактивное
@@ -78,9 +83,6 @@
 
     // Создаем фрагмент с метками и добавляем его на карту в блок меток
     mapPins.appendChild(createPins(data, placeCard));
-
-    // Отображаем карточку первого объявления
-    placeCard(data[0]);
   }
 
   /**
@@ -109,11 +111,6 @@
     // Деактивируем фильтр карты
     setFilterState(false);
   }
-
-  // Инициализация переменных необходимых для работы модуля
-
-  // Элемент карты
-  var map = document.querySelector('.map');
 
   // Экспорт функций модуля
   window.map = {
