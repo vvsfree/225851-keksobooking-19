@@ -1,9 +1,14 @@
 'use strict';
 
 (function () {
+  // Максимальное количество пинов на карте
+  var MAX_PIN_COUNT = 5;
+
   // Размеры метки на карте
   var PIN_WIDTH = 50;
   var PIN_HEIGHT = 70;
+
+  var ACTIVE_PIN_CLASS_NAME = 'map__pin--active';
 
   /**
    * Создание DOM-элемента метки на основе переданного шаблона и данных объявления
@@ -28,39 +33,39 @@
   }
 
   /**
-   * Добавляем обработчик на клик
-   * Объект данных сохраняется в замыкании, т.о. скрываем полученные данные
-   * @param {HTMLElement} pin - метка карты
-   * @param {Object} dataObject - объект данных объявления
-   * @param {Function} clickHandler - обработчик клика
-   */
-  function addPinClickHandler(pin, dataObject, clickHandler) {
-    pin.addEventListener('click', function () {
-      clickHandler(dataObject);
-    });
-  }
-
-  /**
    * Функция создает DOM-элементы меток и формирует из них фрагмент документа
    * Метки создаются на основе шаблона #pin
    * Свойства меток инициализируются из переданного массива данных
    * @param {Array} data - массив данных объявлений
-   * @param {Function} pinClickHandler - обработчик клика на метку
+   * @param {Function} placeCard - функция отображения карточки
    * @return {DocumentFragment} фрагмент документа
    */
-  function createPins(data, pinClickHandler) {
+  function createPins(data, placeCard) {
     var template = document.querySelector('#pin').content.querySelector('.map__pin');
     var fragment = document.createDocumentFragment();
 
-    for (var i = 0; i < data.length; i++) {
+    // ТЗ 5.8. Не более 5ти меток на карте
+    data.slice(0, MAX_PIN_COUNT).forEach(function (dataObject) {
       // ТЗ 5.2. Если в объекте с описанием объявления отсутствует поле offer, то метка объявления не должна отображаться на карте.
-      if (data[i].offer !== undefined) {
-        var pin = createPin(data[i], template);
+      if (dataObject.offer) {
+        var pin = createPin(dataObject, template);
+
         // Добавляем обработчик на click
-        addPinClickHandler(pin, data[i], pinClickHandler);
+        pin.addEventListener('click', function () {
+          // Вызываем функцию отображения карточки из map.js
+          placeCard(dataObject);
+          // ТЗ 5.3. Активная метка
+          var activePin = document.querySelector('.' + ACTIVE_PIN_CLASS_NAME);
+          if (activePin) {
+            activePin.classList.remove(ACTIVE_PIN_CLASS_NAME);
+          }
+          pin.classList.add(ACTIVE_PIN_CLASS_NAME);
+        });
+
         fragment.appendChild(pin);
       }
-    }
+    });
+
     return fragment;
   }
 

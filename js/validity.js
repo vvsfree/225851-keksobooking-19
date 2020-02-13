@@ -1,6 +1,32 @@
 'use strict';
 
 (function () {
+  // Инициализация переменных необходимых для работы модуля
+
+  // Форма объявления
+  var adForm = document.querySelector('.ad-form');
+
+  // Заголовок объявления
+  var title = adForm.querySelector('#title');
+  // Адрес
+  var address = adForm.querySelector('#address');
+  // Цена за ночь
+  var price = adForm.querySelector('#price');
+  // Тип жилища
+  var type = adForm.querySelector('#type');
+  // Время заезда
+  var timein = adForm.querySelector('#timein');
+  // Время выезда
+  var timeout = adForm.querySelector('#timeout');
+  // Количество комнат
+  var rooms = adForm.querySelector('#room_number');
+  // Количество гостей
+  var guests = adForm.querySelector('#capacity');
+  // Аватар пользователя
+  var avatar = adForm.querySelector('#avatar');
+  // Фотографии жилья
+  var images = adForm.querySelector('#images');
+
   /**
    * Для поля "Заголовок объявления" устанавливается минимальная и максимальная длина,
    * поле становится обязательным
@@ -181,32 +207,6 @@
     // Добавление обработчиков событий
     setHandlers();
   }
-
-  // Инициализация переменных необходимых для работы модуля
-
-  // Форма объявления
-  var adForm = document.querySelector('.ad-form');
-
-  // Заголовок объявления
-  var title = adForm.querySelector('#title');
-  // Адрес
-  var address = adForm.querySelector('#address');
-  // Цена за ночь
-  var price = adForm.querySelector('#price');
-  // Тип жилища
-  var type = adForm.querySelector('#type');
-  // Время заезда
-  var timein = adForm.querySelector('#timein');
-  // Время выезда
-  var timeout = adForm.querySelector('#timeout');
-  // Количество комнат
-  var rooms = adForm.querySelector('#room_number');
-  // Количество гостей
-  var guests = adForm.querySelector('#capacity');
-  // Аватар пользователя
-  var avatar = adForm.querySelector('#avatar');
-  // Фотографии жилья
-  var images = adForm.querySelector('#images');
 
   // Экспорт функций модуля
   window.validity = {

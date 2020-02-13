@@ -1,11 +1,14 @@
 'use strict';
 
 (function () {
+  // Наименование собственного класса диалога
+  var DIALOG_CLASS_NAME = 'dialog';
+
   /**
    * Обработчик нажатия Escape на всем документе
    * @param {Event} evt - событие
    */
-  function keydownHandler(evt) {
+  function keydownEscHandler(evt) {
     if (evt.key === 'Escape') {
       removePopup(evt);
     }
@@ -16,7 +19,8 @@
    * @param {Event} evt - событие
    */
   function clickHandler(evt) {
-    if (evt.target.closest('main .' + popup.className) !== popup) {
+    // Диалог закрывается по клику по темной области
+    if (evt.target.classList.contains(DIALOG_CLASS_NAME)) {
       removePopup(evt);
     }
   }
@@ -27,17 +31,42 @@
    * @param {Event} evt - событие
    */
   function removePopup(evt) {
-    popup.remove();
     evt.stopPropagation();
-    document.removeEventListener('keydown', keydownHandler);
+    document.querySelector('.' + DIALOG_CLASS_NAME).remove();
+    document.removeEventListener('keydown', keydownEscHandler);
     document.removeEventListener('click', clickHandler);
+  }
+
+  /**
+   * Создание модального окна
+   * @param {String} className - имя класса диалога (и шаблона)
+   * @return {HTMLElement} DOM-элемент диалога
+   */
+  function createDialog(className) {
+    var template = document.querySelector('#' + className).content.querySelector('.' + className);
+
+    // Создаем диалог
+    var dialog = template.cloneNode(true);
+
+    // Добавляем собственный класс, которого нет в разметке,
+    // чтобы единообразно управлять сообщениями об успехе или ошибке
+    dialog.classList.add(DIALOG_CLASS_NAME);
+
+    // События закрытия диалога уровня документа
+    document.addEventListener('keydown', keydownEscHandler);
+    document.addEventListener('click', clickHandler);
+
+    // Добавляем в DOM
+    document.querySelector('main').appendChild(dialog);
+
+    return dialog;
   }
 
   /**
    * Показать сообщение в случае успеха
    */
   function showSuccessMsg() {
-    return;
+    createDialog('success');
   }
 
   /**
@@ -45,27 +74,17 @@
    * @param {String} errorMsg - сообщение
    */
   function showErrorMsg(errorMsg) {
-    var template = document.querySelector('#error').content.querySelector('.error');
-
-    // Диалог объявлен на уровне модуля
-    popup = template.cloneNode(true);
+    var dialog = createDialog('error');
 
     // Устанавливаем сообщение об ошибке
-    popup.querySelector('.error__message').textContent = errorMsg;
-    var button = popup.querySelector('.error__button');
+    dialog.querySelector('.error__message').textContent = errorMsg;
 
+    // Добавляем обработчик по клику на кнопку
+    var button = dialog.querySelector('.error__button');
     button.addEventListener('click', function (evt) {
       removePopup(evt);
     });
-
-    document.addEventListener('keydown', keydownHandler);
-    document.addEventListener('click', clickHandler);
-
-    document.querySelector('main').appendChild(popup);
   }
-
-  // Переменные необходимые для работы модуля
-  var popup;
 
   // Экспорт функций модуля
   window.util = {
