@@ -2,15 +2,25 @@
 
 (function () {
   // Импорт функций из других модулей
-  var showErrorMsg = window.util.showErrorMsg;
-  var load = window.backend.load;
-  var createPins = window.pin.createPins;
+  var getMainPinCoords = window.mainPin.getPinCoords;
+  var getRoundMainPinCoords = window.mainPin.getRoundPinCoords;
+  var mainPinMouseDownHandler = window.mainPin.mouseDownHandler;
+  var resetMainPinPosition = window.mainPin.resetPinPosition;
+  var setAddress = window.form.setAddress;
+  var activateForm = window.form.activateForm;
+  var deactivateForm = window.form.deactivateForm;
   var createCard = window.card.createCard;
+  var createPins = window.pin.createPins;
+  var load = window.backend.load;
+  var showErrorMsg = window.util.showErrorMsg;
+  var addRepeatHandler = window.util.addRepeatHandler;
 
   // Инициализация переменных необходимых для работы модуля
 
   // Элемент карты
   var map = document.querySelector('.map');
+  // Главная метка карты
+  var mainPin = document.querySelector('.map__pin--main');
 
   /**
    * Установка активного/неактивного состояния фильтра карты map__filters
@@ -26,6 +36,9 @@
     });
     // fieldset фильтра устанавливается в необходимое состояние
     filterForm.querySelector('.map__features').disabled = !isActive;
+    if (!isActive) {
+      filterForm.reset();
+    }
   }
 
   /**
@@ -77,12 +90,23 @@
    * Обработка успешного получения массива данных похожих объявлений
    * @param {Array} data - массив объектов данных
    */
-  function successHandler(data) {
+  function successLoadHandler(data) {
     // Блок меток
     var mapPins = map.querySelector('.map__pins');
 
     // Создаем фрагмент с метками и добавляем его на карту в блок меток
     mapPins.appendChild(createPins(data, placeCard));
+  }
+
+  /**
+   * Обработка ошибки получения данных
+   * @param {String} errorMsg - сообщение об ошибке
+   */
+  function errorLoadHandler(errorMsg) {
+    showErrorMsg(errorMsg);
+    deactivateMap();
+    deactivateForm();
+    addRepeatHandler(mainPinClickHandler);
   }
 
   /**
@@ -92,11 +116,15 @@
     // Убираем темный экран
     map.classList.remove('map--faded');
 
+    // Главный пин перерождается, у него появляется ножка, острие которого указывает немного в другую точку
+    // Соответственно, меняем адрес на форме
+    setAddress(getMainPinCoords());
+
     // Активируем фильтр карты
     setFilterState(true);
 
     // Получаем массив данных объявлений
-    load(successHandler, showErrorMsg);
+    load(successLoadHandler, errorLoadHandler);
   }
 
   /**
@@ -105,11 +133,51 @@
   function deactivateMap() {
     // Добавляем темный экран, если его нет
     if (!map.classList.contains('map--faded')) {
-      map.classList.remove('map--faded');
+      map.classList.add('map--faded');
     }
+
+    // Удаляем карточку активного объявления с карты
+    removeCard();
+
+    // Удаляем метки похожих объявлений с карты
+    map.querySelectorAll('.map__pin:not(.map__pin--main)').forEach(function (pin) {
+      pin.remove();
+    });
 
     // Деактивируем фильтр карты
     setFilterState(false);
+
+    // Перемещаем метку на исходную позицию
+    resetMainPinPosition();
+
+    // Главная метка с самого начала круглая или
+    // становится круглой при деактивации и при этом возвращается в исходное место на карте
+    // Соответственно, меняем адрес на форме
+    // ТЗ 4.2. Поле адреса должно быть заполнено всегда, в том числе сразу после открытия страницы (в неактивном состоянии).
+    setAddress(getRoundMainPinCoords());
+
+    // Добавляем возможность активации приложения (карта и форма) по нажатию на главную метку
+    mainPin.addEventListener('click', mainPinClickHandler);
+
+    // Закрываем возможность перетаскивания главной метки в неактивном состоянии
+    // По договоренности с наставником даем возможность двигать метку только после первичного click (или Enter) на нее
+    mainPin.removeEventListener('mousedown', mainPinMouseDownHandler);
+  }
+
+  /**
+   * Обработчик события клика на круглую главную метку
+   * Срабатывает один раз
+   */
+  function mainPinClickHandler() {
+    // ТЗ 1.1. Первое взаимодействие с меткой (mousedown) переводит страницу в активное состояние
+    activateMap();
+    activateForm();
+
+    // Удаляем обработчик, т.о. он сработает однократно
+    mainPin.removeEventListener('click', mainPinClickHandler);
+
+    // Обеспечиваем возможность перетаскивания главной метки
+    mainPin.addEventListener('mousedown', mainPinMouseDownHandler);
   }
 
   // Экспорт функций модуля

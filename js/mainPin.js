@@ -1,6 +1,9 @@
 'use strict';
 
 (function () {
+  // Импорт функций из других модулей
+  var setAddress = window.form.setAddress;
+
   // Длина ножки главной метки
   var MAIN_PIN_LEG_HEIGHT = 16;
 
@@ -10,15 +13,13 @@
   var LOCATION_Y_MIN = 130;
   var LOCATION_Y_MAX = 630;
 
-  // Импорт функций из других модулей
-  var activateMap = window.map.activateMap;
-  var activateForm = window.form.activateForm;
-  var setAddress = window.form.setAddress;
-
   // Инициализация переменных необходимых для работы модуля
 
   // Главная метка карты
   var mainPin = document.querySelector('.map__pin--main');
+
+  // Исходная позиция метки на карте
+  var initialPosition = getPinCoords();
 
   /**
    * Вычисление координат главной метки
@@ -29,7 +30,7 @@
    * @param {Object} position - позиция элемента метки (left, top)
    * @return {Object} - координаты метки (x, y)
    */
-  function getCoords(position) {
+  function getPinCoords(position) {
     var coords = {};
     if (position) {
       coords.x = position.x;
@@ -52,24 +53,9 @@
    * @return {Object} - координаты метки (x, y)
    */
   function getRoundPinCoords() {
-    var coords = getCoords();
+    var coords = getPinCoords();
     coords.y = mainPin.offsetTop + Math.floor(mainPin.offsetHeight / 2);
     return coords;
-  }
-
-  /**
-   * Обработчик события клика на круглую главную метку
-   * Срабатывает один раз
-   */
-  function clickHandler() {
-    activateMap();
-    activateForm(getCoords());
-
-    // Удаляем обработчик, т.о. он сработает однократно
-    mainPin.removeEventListener('click', clickHandler);
-
-    // Обеспечиваем возможность перетаскивания главной метки
-    mainPin.addEventListener('mousedown', downHandler);
   }
 
   /**
@@ -80,7 +66,7 @@
    */
   function correctPinPosition(position, mapWidth) {
     // Новые возможные координаты метки (x, y)
-    var coords = getCoords(position);
+    var coords = getPinCoords(position);
 
     // Горизонтальные границы
     if (coords.x < LOCATION_X_MIN) {
@@ -99,11 +85,19 @@
   }
 
   /**
+   * Сбрасываем позицию главной метки в исходное состояние
+   */
+  function resetPinPosition() {
+    mainPin.style.left = initialPosition.x + 'px';
+    mainPin.style.top = initialPosition.y + 'px';
+  }
+
+  /**
    * Обработчик события mousedown
    * Реализация перемещения главной метки
    * @param {Event} evt - событие
    */
-  function downHandler(evt) {
+  function mouseDownHandler(evt) {
     evt.preventDefault();
     // Начальные координаты мыши
     var startCoords = {
@@ -150,7 +144,7 @@
       mainPin.style.top = pinPosition.y + 'px';
 
       // Задаем координаты метки в форме
-      setAddress(getCoords(pinPosition));
+      setAddress(getPinCoords(pinPosition));
 
       // Запоминаем новые координаты мыши
       startCoords = mouseCoords;
@@ -173,7 +167,9 @@
 
   // Экспорт функций модуля
   window.mainPin = {
-    clickHandler: clickHandler,
-    getRoundPinCoords: getRoundPinCoords
+    mouseDownHandler: mouseDownHandler,
+    getPinCoords: getPinCoords,
+    getRoundPinCoords: getRoundPinCoords,
+    resetPinPosition: resetPinPosition
   };
 })();

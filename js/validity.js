@@ -200,17 +200,23 @@
     setTypePrice();
     setImages();
 
-    // Первичная валидация в сложных случаях
-    validateTime();
-    validateCapacity();
-
     // Добавление обработчиков событий
     setHandlers();
   }
 
+  /**
+   * Валидация сложных случаев
+   * Используется setCustomValidity
+   */
+  function validate() {
+    validateTime();
+    validateCapacity();
+  }
+
   // Экспорт функций модуля
   window.validity = {
-    init: init
+    init: init,
+    validate: validate
   };
 
 })();
