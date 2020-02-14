@@ -2,7 +2,19 @@
 
 (function () {
   // Импорт функций из других модулей
-  var initValidation = window.validity.init;
+  var validate = window.validity.validate;
+  var save = window.backend.save;
+  var showSuccessMsg = window.util.showSuccessMsg;
+  var showErrorMsg = window.util.showErrorMsg;
+  var addRepeatHandler = window.util.addRepeatHandler;
+
+
+  // Инициализация переменных необходимых для работы модуля
+
+  // Форма публикации нового объявления
+  var form = document.querySelector('.ad-form');
+  // Кнопка сброса формы
+  var reset = form.querySelector('.ad-form__reset');
 
   /**
    * Поля формы устанавливается в активное/неактивное состояния
@@ -30,39 +42,77 @@
 
   /**
    * Активация формы
-   * @param {Object} coords - координаты главной метки (x, y)
    */
-  function activateForm(coords) {
+  function activateForm() {
     setFormState(true);
-    // Инициализация всего того, что связано с валидацией
-    initValidation();
-
-    // Главная метка меняет свою форму, у нее появляется ножка и ее острый конец указывает
-    // уже на другую точку (чем та, на которую указывал ее центр, когда она была круглой)
-    // Соответственно, меняем адрес в форме
-    setAddress(coords);
+    validate();
   }
 
   /**
    * Деактивация формы
-   * @param {Object} coords - координаты главной метки (x, y)
    */
-  function deactivateForm(coords) {
+  function deactivateForm() {
     setFormState(false);
-    // ТЗ 4.2. Поле адреса должно быть заполнено всегда, в том числе сразу после открытия страницы (в неактивном состоянии).
-    setAddress(coords);
   }
 
   /**
    * Установка значения поля "Адрес"
    * Поле содержит координаты главной метки
-   * Значения также может устанавливать модуль mainPin.js в результате перемещения главной метки
+   * Значения могут устанавливать другие модули
    * @param {Object} coords - координаты (x, y)
    */
   function setAddress(coords) {
     var address = document.querySelector('#address');
     address.value = coords.x + ', ' + coords.y;
   }
+
+  /**
+   * Сброс страницы с предварительным сбросом формы
+   * Вызывается в двух местах, удобно объединить в одну функцию
+   * @requires window.map.deactivateMap
+   */
+  function resetPage() {
+    form.reset();
+    // Здесь сложная ситуация
+    // В момент создания модуля формы form.js, модуль карты map.js еще не существует
+    // Но вот в момент вызова этой функции существует точно
+    // Сомнения в том, что это неявный импорт, во первых
+    // Во-вторых, взаимозависимость модулей:
+    // карта импортирует несколько функций у формы, а форма при этом импортирует функцию у карты
+    window.map.deactivateMap();
+    deactivateForm();
+  }
+
+  /**
+   * Обработчик успешной отправки формы
+   */
+  function successSaveHandler() {
+    resetPage();
+    showSuccessMsg();
+  }
+
+  /**
+   * Обработчик неуспешной отправки формы
+   * @param {String} errorMsg - сообщение об ошибке
+   */
+  function errorSaveHandler(errorMsg) {
+    showErrorMsg(errorMsg);
+    addRepeatHandler(function () {
+      save(new FormData(form), successSaveHandler, errorSaveHandler);
+    });
+  }
+
+  // Отправка формы, публикация заявления
+  form.addEventListener('submit', function (evt) {
+    evt.preventDefault();
+    save(new FormData(form), successSaveHandler, errorSaveHandler);
+  });
+
+  // Обработчик для reset, кнопка "Очистить"
+  reset.addEventListener('click', function (evt) {
+    evt.preventDefault();
+    resetPage();
+  });
 
   // Экспорт функций модуля
   window.form = {

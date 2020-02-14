@@ -10,7 +10,7 @@
    */
   function keydownEscHandler(evt) {
     if (evt.key === 'Escape') {
-      removePopup(evt);
+      removeDialog(evt);
     }
   }
 
@@ -21,7 +21,7 @@
   function clickHandler(evt) {
     // Диалог закрывается по клику по темной области
     if (evt.target.classList.contains(DIALOG_CLASS_NAME)) {
-      removePopup(evt);
+      removeDialog(evt);
     }
   }
 
@@ -30,9 +30,12 @@
    * Удаление обработчиков уровня документа
    * @param {Event} evt - событие
    */
-  function removePopup(evt) {
+  function removeDialog(evt) {
     evt.stopPropagation();
-    document.querySelector('.' + DIALOG_CLASS_NAME).remove();
+    var dialog = document.querySelector('.' + DIALOG_CLASS_NAME);
+    if (dialog) {
+      dialog.remove();
+    }
     document.removeEventListener('keydown', keydownEscHandler);
     document.removeEventListener('click', clickHandler);
   }
@@ -82,13 +85,19 @@
     // Добавляем обработчик по клику на кнопку
     var button = dialog.querySelector('.error__button');
     button.addEventListener('click', function (evt) {
-      removePopup(evt);
+      removeDialog(evt);
     });
+  }
+
+  function addRepeatHandler(repeatHandler) {
+    var button = document.querySelector('.error__button');
+    button.addEventListener('click', repeatHandler);
   }
 
   // Экспорт функций модуля
   window.util = {
     showSuccessMsg: showSuccessMsg,
-    showErrorMsg: showErrorMsg
+    showErrorMsg: showErrorMsg,
+    addRepeatHandler: addRepeatHandler
   };
 })();
