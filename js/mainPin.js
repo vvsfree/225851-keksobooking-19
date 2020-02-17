@@ -85,11 +85,26 @@
   }
 
   /**
-   * Сбрасываем позицию главной метки в исходное состояние
+   * Сбрасываем главную метку в исходное состояние
+   * @param {Function} clickHandler - обработчик
    */
-  function resetPinPosition() {
+  function resetPin(clickHandler) {
+    // Сбрасываем позицию главной метки в исходное состояние
     mainPin.style.left = initialPosition.x + 'px';
     mainPin.style.top = initialPosition.y + 'px';
+
+    // Главная метка с самого начала круглая или
+    // становится круглой при деактивации и при этом возвращается в исходное место на карте
+    // Соответственно, меняем адрес на форме
+    // ТЗ 4.2. Поле адреса должно быть заполнено всегда, в том числе сразу после открытия страницы (в неактивном состоянии).
+    setAddress(getRoundPinCoords());
+
+    // Добавляем возможность активации приложения (карта и форма) по нажатию на главную метку
+    mainPin.addEventListener('click', clickHandler);
+
+    // Закрываем возможность перетаскивания главной метки в неактивном состоянии
+    // По договоренности с наставником даем возможность двигать метку только после первичного click (или Enter) на нее
+    mainPin.removeEventListener('mousedown', mouseDownHandler);
   }
 
   /**
@@ -170,6 +185,6 @@
     mouseDownHandler: mouseDownHandler,
     getPinCoords: getPinCoords,
     getRoundPinCoords: getRoundPinCoords,
-    resetPinPosition: resetPinPosition
+    resetPin: resetPin
   };
 })();

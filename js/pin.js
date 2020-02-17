@@ -1,14 +1,9 @@
 'use strict';
 
 (function () {
-  // Максимальное количество пинов на карте
-  var MAX_PIN_COUNT = 5;
-
   // Размеры метки на карте
   var PIN_WIDTH = 50;
   var PIN_HEIGHT = 70;
-
-  var ACTIVE_PIN_CLASS_NAME = 'map__pin--active';
 
   /**
    * Создание DOM-элемента метки на основе переданного шаблона и данных объявления
@@ -44,26 +39,18 @@
     var template = document.querySelector('#pin').content.querySelector('.map__pin');
     var fragment = document.createDocumentFragment();
 
-    // ТЗ 5.8. Не более 5ти меток на карте
-    data.slice(0, MAX_PIN_COUNT).forEach(function (dataObject) {
-      // ТЗ 5.2. Если в объекте с описанием объявления отсутствует поле offer, то метка объявления не должна отображаться на карте.
-      if (dataObject.offer) {
-        var pin = createPin(dataObject, template);
+    data.forEach(function (dataObject) {
+      var pin = createPin(dataObject, template);
 
-        // Добавляем обработчик на click
-        pin.addEventListener('click', function () {
-          // Вызываем функцию отображения карточки из map.js
-          placeCard(dataObject);
-          // ТЗ 5.3. Активная метка
-          var activePin = document.querySelector('.' + ACTIVE_PIN_CLASS_NAME);
-          if (activePin) {
-            activePin.classList.remove(ACTIVE_PIN_CLASS_NAME);
-          }
-          pin.classList.add(ACTIVE_PIN_CLASS_NAME);
-        });
+      // Добавляем обработчик на click
+      pin.addEventListener('click', function () {
+        // Вызываем функцию отображения карточки из map.js
+        placeCard(dataObject);
+        // ТЗ 5.3. Активная метка
+        pin.classList.add('map__pin--active');
+      });
 
-        fragment.appendChild(pin);
-      }
+      fragment.appendChild(pin);
     });
 
     return fragment;
