@@ -33,7 +33,7 @@
    */
   function addFilterChangeHandler(changeHandler) {
     var debounceChangeHandler = debounce(function () {
-      changeHandler(filter(rawData));
+      changeHandler(filter());
     });
     mapFilter.addEventListener('change', debounceChangeHandler);
   }
@@ -65,7 +65,7 @@
     loadRawData(function (data) {
       // Запоминаем полученные данные для последующей фильтрации
       rawData = data;
-      successHandller(filter(rawData));
+      successHandller(filter());
     }, errorHandler);
   }
 
