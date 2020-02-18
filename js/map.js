@@ -3,15 +3,19 @@
 (function () {
   // Импорт функций из других модулей
   var getMainPinCoords = window.mainPin.getPinCoords;
-  var getRoundMainPinCoords = window.mainPin.getRoundPinCoords;
   var mainPinMouseDownHandler = window.mainPin.mouseDownHandler;
-  var resetMainPinPosition = window.mainPin.resetPinPosition;
+  var resetMainPin = window.mainPin.resetPin;
+
+  var addFilterChangeHandler = window.filters.addChangeHandler;
+  var activateFilter = window.filters.activateFilter;
+  var deactivateFilter = window.filters.deactivateFilter;
+  var load = window.filters.load;
+
   var setAddress = window.form.setAddress;
   var activateForm = window.form.activateForm;
   var deactivateForm = window.form.deactivateForm;
   var createCard = window.card.createCard;
   var createPins = window.pin.createPins;
-  var load = window.backend.load;
   var showErrorMsg = window.util.showErrorMsg;
   var addRepeatHandler = window.util.addRepeatHandler;
 
@@ -21,23 +25,26 @@
   var map = document.querySelector('.map');
   // Главная метка карты
   var mainPin = document.querySelector('.map__pin--main');
+  // Блок меток
+  var mapPins = map.querySelector('.map__pins');
 
   /**
-   * Установка активного/неактивного состояния фильтра карты map__filters
-   * @param {Boolean} isActive - true: устанавливается активное состояние; false: неактивное
+   * Удаляем метки с карты
    */
-  function setFilterState(isActive) {
-    // Форма с фильтрами на карте
-    var filterForm = document.querySelector('.map__filters');
-    // selects фильтра устанавливаются в необходимое состояние
-    var filterFormSelects = filterForm.querySelectorAll('.map__filter');
-    filterFormSelects.forEach(function (item) {
-      item.disabled = !isActive;
+  function removePins() {
+    mapPins.querySelectorAll('.map__pin:not(.map__pin--main)').forEach(function (pin) {
+      pin.remove();
     });
-    // fieldset фильтра устанавливается в необходимое состояние
-    filterForm.querySelector('.map__features').disabled = !isActive;
-    if (!isActive) {
-      filterForm.reset();
+  }
+
+  /**
+   * Делаем метку неактивной
+   */
+  function deactivatePin() {
+    var activePinClassName = 'map__pin--active';
+    var activePin = mapPins.querySelector('.' + activePinClassName);
+    if (activePin) {
+      activePin.classList.remove(activePinClassName);
     }
   }
 
@@ -48,6 +55,8 @@
     var cardElement = map.querySelector('.map__card');
     if (cardElement) {
       cardElement.remove();
+      // ТЗ 5.3. Удаляем признак активности у соответствующей метки
+      deactivatePin();
       // Удаляем обработчик Esc при закрытии - критерий Б26
       document.removeEventListener('keydown', cardEscHandler);
     }
@@ -91,11 +100,11 @@
    * @param {Array} data - массив объектов данных
    */
   function successLoadHandler(data) {
-    // Блок меток
-    var mapPins = map.querySelector('.map__pins');
-
     // Создаем фрагмент с метками и добавляем его на карту в блок меток
     mapPins.appendChild(createPins(data, placeCard));
+
+    // Активируем фильтр карты, только если загрузка данных прошла успешно
+    activateFilter();
   }
 
   /**
@@ -116,12 +125,9 @@
     // Убираем темный экран
     map.classList.remove('map--faded');
 
-    // Главный пин перерождается, у него появляется ножка, острие которого указывает немного в другую точку
+    // Главный пин перерождается, у него появляется ножка, острие которой указывает немного в другую точку
     // Соответственно, меняем адрес на форме
     setAddress(getMainPinCoords());
-
-    // Активируем фильтр карты
-    setFilterState(true);
 
     // Получаем массив данных объявлений
     load(successLoadHandler, errorLoadHandler);
@@ -140,28 +146,13 @@
     removeCard();
 
     // Удаляем метки похожих объявлений с карты
-    map.querySelectorAll('.map__pin:not(.map__pin--main)').forEach(function (pin) {
-      pin.remove();
-    });
+    removePins();
 
     // Деактивируем фильтр карты
-    setFilterState(false);
+    deactivateFilter();
 
-    // Перемещаем метку на исходную позицию
-    resetMainPinPosition();
-
-    // Главная метка с самого начала круглая или
-    // становится круглой при деактивации и при этом возвращается в исходное место на карте
-    // Соответственно, меняем адрес на форме
-    // ТЗ 4.2. Поле адреса должно быть заполнено всегда, в том числе сразу после открытия страницы (в неактивном состоянии).
-    setAddress(getRoundMainPinCoords());
-
-    // Добавляем возможность активации приложения (карта и форма) по нажатию на главную метку
-    mainPin.addEventListener('click', mainPinClickHandler);
-
-    // Закрываем возможность перетаскивания главной метки в неактивном состоянии
-    // По договоренности с наставником даем возможность двигать метку только после первичного click (или Enter) на нее
-    mainPin.removeEventListener('mousedown', mainPinMouseDownHandler);
+    // Сбрасываем главную метку в исходное состояние
+    resetMainPin(mainPinClickHandler);
   }
 
   /**
@@ -179,6 +170,24 @@
     // Обеспечиваем возможность перетаскивания главной метки
     mainPin.addEventListener('mousedown', mainPinMouseDownHandler);
   }
+
+  /**
+   * Обработчик события change для фильта карты
+   * @param {Array} data - объекты данных объявлений
+   */
+  function filterChangeHandler(data) {
+    // Удаляем карточку объявления с карты
+    removeCard();
+
+    // Удаляем метки, которые уже есть на карте
+    removePins();
+
+    // Создаем фрагмент с метками и добавляем его на карту в блок меток
+    mapPins.appendChild(createPins(data, placeCard));
+  }
+
+  // Добавляем обработчик для фильтра
+  addFilterChangeHandler(filterChangeHandler);
 
   // Экспорт функций модуля
   window.map = {
