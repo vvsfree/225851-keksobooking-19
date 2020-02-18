@@ -6,7 +6,7 @@
   var mainPinMouseDownHandler = window.mainPin.mouseDownHandler;
   var resetMainPin = window.mainPin.resetPin;
 
-  var addFilterChangeHandler = window.filters.addChangeHandler;
+  var addFilterChangeHandler = window.filters.addFilterChangeHandler;
   var activateFilter = window.filters.activateFilter;
   var deactivateFilter = window.filters.deactivateFilter;
   var load = window.filters.load;
