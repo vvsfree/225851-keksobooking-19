@@ -81,7 +81,7 @@
     if (Array.isArray(value)) {
       return value.length === 0 || value.some(isEmpty);
     }
-    return !value;
+    return !(value || value === 0);
   }
 
   /**
