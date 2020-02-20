@@ -2,7 +2,7 @@
 
 (function () {
   // Импорт фунций из других модулей
-  var removeChildElements = window.util.removeChildElements;
+  var removeElements = window.util.removeElements;
   var isImage = window.util.isImage;
 
   var INVALID_IMAGE_ALT = 'Неверный формат файла';
@@ -14,8 +14,9 @@
   );
 
   // Фотографии жилья
-  var imagesChooser = document.querySelector('#images');
-  var imagesPreviews = document.querySelector('.ad-form__photo');
+  var photoContainer = document.querySelector('.ad-form__photo-container');
+  var photoChooser = photoContainer.querySelector('#images');
+  var photoPreview = photoContainer.querySelector('.ad-form__photo');
 
   /**
    * Функция-конструктор ("класс") аватара
@@ -33,13 +34,18 @@
     this.alt = preview.alt;
   }
 
+  function removePhotos() {
+    removeElements(photoContainer.querySelectorAll('.ad-form__photo:not(:nth-of-type(2))'));
+    photoPreview.style.display = 'block';
+  }
+
   /**
    * Используется при сбросе формы в исходное состояние - удаляет все preview
    */
   function reset() {
     avatar.preview.src = avatar.src;
     avatar.preview.alt = avatar.alt;
-    removeChildElements(imagesPreviews);
+    removePhotos();
   }
 
   /**
@@ -73,7 +79,7 @@
       return;
     }
 
-    if (evt.target === imagesChooser) {
+    if (evt.target === photoChooser) {
       // Нажали на кнопку выбора фотографий жилища
       imagesChooserChangeHandler(files);
     } else {
@@ -88,22 +94,27 @@
    */
   function imagesChooserChangeHandler(files) {
     // Удаляем ранее добавленные изображения (если мы повторно нажимаем кнопку "Загрузить фото...")
-    removeChildElements(imagesPreviews);
+    removePhotos();
 
     var fragment = document.createDocumentFragment();
     for (var i = 0; i < files.length; i++) {
-      var img = readFile(files[i], document.createElement('img'));
-      fragment.appendChild(img);
+      var photoElement = photoPreview.cloneNode(true);
+      var imageElement = readFile(files[i], document.createElement('img'));
+      imageElement.width = '70';
+      imageElement.height = '70';
+      photoElement.appendChild(imageElement);
+      fragment.appendChild(photoElement);
     }
-    imagesPreviews.appendChild(fragment);
+    photoContainer.appendChild(fragment);
+    photoPreview.style.display = 'none';
   }
 
   // Добавляем обработчики события change на file элементы
   avatar.chooser.addEventListener('change', imgChangeHandler);
-  imagesChooser.addEventListener('change', imgChangeHandler);
+  photoChooser.addEventListener('change', imgChangeHandler);
 
   // Фотографии жилья можно загружать пачками, ведь их всегда несколько
-  imagesChooser.multiple = true;
+  photoChooser.multiple = true;
 
   // Экспорт функций модуля
   window.image = {

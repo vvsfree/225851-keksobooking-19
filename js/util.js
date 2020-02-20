@@ -12,14 +12,6 @@
   }
 
   /**
-   * Удаление дочерних элементов
-   * @param {HTMLElement} parent - родительский элемент
-   */
-  function removeChildElements(parent) {
-    removeElements(Array.from(parent.children));
-  }
-
-  /**
    * Проверка, является ли файл изображением
    * @param {File} file - файл
    * @return {Boolean} true/false - является/не является
@@ -31,7 +23,6 @@
   // Экспорт функций модуля
   window.util = {
     removeElements: removeElements,
-    removeChildElements: removeChildElements,
     isImage: isImage
   };
 })();
