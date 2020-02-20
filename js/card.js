@@ -1,6 +1,9 @@
 'use strict';
 
 (function () {
+  // Импорт фунций из других модулей
+  var removeElements = window.util.removeElements;
+
   // Валюта
   var CURRENCY = '₽';
 
@@ -141,9 +144,7 @@
     }
     var features = featuresElement.querySelectorAll(selector);
     // Найденная коллекция удаляется из DOM
-    features.forEach(function (item) {
-      item.remove();
-    });
+    removeElements(features);
   }
 
   /**
