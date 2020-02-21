@@ -2,11 +2,12 @@
 
 (function () {
   // Импорт функций из других модулей
+  var resetImages = window.image.reset;
   var validate = window.validity.validate;
   var save = window.backend.save;
-  var showSuccessMsg = window.util.showSuccessMsg;
-  var showErrorMsg = window.util.showErrorMsg;
-  var addRepeatHandler = window.util.addRepeatHandler;
+  var showSuccessMsg = window.dialog.showSuccessMsg;
+  var showErrorMsg = window.dialog.showErrorMsg;
+  var addRepeatHandler = window.dialog.addRepeatHandler;
 
 
   // Инициализация переменных необходимых для работы модуля
@@ -53,6 +54,7 @@
    */
   function deactivateForm() {
     setFormState(false);
+    resetImages();
   }
 
   /**

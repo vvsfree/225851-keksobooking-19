@@ -14,10 +14,12 @@
   var setAddress = window.form.setAddress;
   var activateForm = window.form.activateForm;
   var deactivateForm = window.form.deactivateForm;
+
   var createCard = window.card.createCard;
   var createPins = window.pin.createPins;
-  var showErrorMsg = window.util.showErrorMsg;
-  var addRepeatHandler = window.util.addRepeatHandler;
+  var showErrorMsg = window.dialog.showErrorMsg;
+  var addRepeatHandler = window.dialog.addRepeatHandler;
+  var removeElements = window.util.removeElements;
 
   // Инициализация переменных необходимых для работы модуля
 
@@ -32,9 +34,7 @@
    * Удаляем метки с карты
    */
   function removePins() {
-    mapPins.querySelectorAll('.map__pin:not(.map__pin--main)').forEach(function (pin) {
-      pin.remove();
-    });
+    removeElements(mapPins.querySelectorAll('.map__pin:not(.map__pin--main)'));
   }
 
   /**
@@ -191,7 +191,6 @@
 
   // Экспорт функций модуля
   window.map = {
-    activateMap: activateMap,
     deactivateMap: deactivateMap
   };
 

@@ -132,10 +132,10 @@
    * Проверка загруженных файлов
    * Файлы должны быть изображениями
    * @param {HTMLElement} element - элемент типа file
-   * @param {FileList} files - загруженные файлы
    */
-  function validateImages(element, files) {
+  function validateImages(element) {
     element.setCustomValidity('');
+    var files = element.files;
     for (var i = 0; i < files.length; i++) {
       var fileType = files[i].type;
       if (fileType.substr(0, 6) !== 'image/') {
@@ -169,13 +169,13 @@
     guests.addEventListener('change', validateCapacity);
 
     // Аватар пользователя
-    avatar.addEventListener('change', function (evt) {
-      validateImages(avatar, evt.target.files);
+    avatar.addEventListener('change', function () {
+      validateImages(avatar);
     });
 
     // Фотографии жилья
-    images.addEventListener('change', function (evt) {
-      validateImages(images, evt.target.files);
+    images.addEventListener('change', function () {
+      validateImages(images);
     });
   }
 
@@ -211,11 +211,14 @@
   function validate() {
     validateTime();
     validateCapacity();
+    validateImages(avatar);
+    validateImages(images);
   }
+
+  init();
 
   // Экспорт функций модуля
   window.validity = {
-    init: init,
     validate: validate
   };
 
