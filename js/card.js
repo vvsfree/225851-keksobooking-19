@@ -139,9 +139,9 @@
     var className = '.popup__feature';
     var selector = className;
     // Формирование коллекции элементов, у которых нет соответствия с данными удобств
-    for (var i = 0; i < featureArray.length; i++) {
-      selector += format(':not({1}--{2})', className, featureArray[i]);
-    }
+    featureArray.forEach(function (item) {
+      selector += format(':not({1}--{2})', className, item);
+    });
     var features = featuresElement.querySelectorAll(selector);
     // Найденная коллекция удаляется из DOM
     removeElements(features);
@@ -160,13 +160,14 @@
     // Первый дочерний элемент может служить шаблоном
     var photoTemplate = photosElement.firstElementChild;
     var fragment = document.createDocumentFragment();
-    for (var i = 0; i < photoArray.length; i++) {
+    photoArray.forEach(function (item) {
       // Создаем элемент фото
       var photoElement = photoTemplate.cloneNode(true);
       // Прописываем ему url изображения
-      photoElement.src = photoArray[i];
+      photoElement.src = item;
       fragment.appendChild(photoElement);
-    }
+    });
+
     photosElement.appendChild(fragment);
     // Шаблонный элемент фото удаляется из DOM
     photoTemplate.remove();

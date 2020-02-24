@@ -1,6 +1,30 @@
 'use strict';
 
 (function () {
+  // Импорт фунций из других модулей
+  var isImage = window.util.isImage;
+
+  // Константы
+  var TITLE_MIN_LENGTH = 30;
+  var TITLE_MAX_LENGTH = 100;
+  var IMAGE_ACCEPT_VALUE = 'image/*';
+  var PRICE_MAX_VALUE = 1000000;
+  var PRICE_MAP = {
+    bungalo: 0,
+    flat: 1000,
+    house: 5000,
+    palace: 10000
+  };
+  var MSG_TIME = 'Время заезда и выезда должны быть синхронизированы';
+  var MSG_IMAGE = 'Загруженный файл не является изображением';
+  var MSG_CAPACITY_MAP = {
+    '1': 'Для одной комнаты может быть только 1 гость',
+    '2': 'Для двух комнат гостей может быть 1 или 2',
+    '3': 'Для трех комнат гостей может быть от 1 до 3',
+    '100': '100 комнат не для гостей',
+    'default': 'Невозможно определить количество гостей'
+  };
+
   // Инициализация переменных необходимых для работы модуля
 
   // Форма объявления
@@ -32,8 +56,8 @@
    * поле становится обязательным
    */
   function setTitle() {
-    title.minLength = 30;
-    title.maxLength = 100;
+    title.minLength = TITLE_MIN_LENGTH;
+    title.maxLength = TITLE_MAX_LENGTH;
     title.required = true;
   }
 
@@ -49,7 +73,7 @@
    * поле становится обязательным
    */
   function setPrice() {
-    price.max = 1000000;
+    price.max = PRICE_MAX_VALUE;
     price.required = true;
   }
 
@@ -58,7 +82,7 @@
    * Для удобства пользователя
    */
   function setImages() {
-    var acceptValue = 'image/*';
+    var acceptValue = IMAGE_ACCEPT_VALUE;
     avatar.accept = acceptValue;
     images.accept = acceptValue;
   }
@@ -66,23 +90,8 @@
   /**
    * Поле «Тип жилья» влияет на минимальное значение поля «Цена за ночь» и на его placeholder
    */
-  function setTypePrice() {
-    switch (type.value) {
-      case 'bungalo':
-        price.min = 0;
-        break;
-      case 'flat':
-        price.min = 1000;
-        break;
-      case 'house':
-        price.min = 5000;
-        break;
-      case 'palace':
-        price.min = 10000;
-        break;
-      default:
-        price.min = 5000;
-    }
+  function typePriceChangeHandler() {
+    price.min = PRICE_MAP[type.value];
     price.placeholder = price.min;
   }
 
@@ -92,7 +101,7 @@
   function validateTime() {
     timein.setCustomValidity('');
     if (timein.value !== timeout.value) {
-      var customMessage = 'Время заезда и выезда должны быть синхронизированы';
+      var customMessage = MSG_TIME;
       timein.setCustomValidity(customMessage);
     }
   }
@@ -100,31 +109,35 @@
   /**
    * Проверяется соответствие количества гостей (спальных мест) и количества комнат
    */
-  function validateCapacity() {
+  function capacityChangeHandler() {
+    var isNotValid = false;
     guests.setCustomValidity('');
     switch (rooms.value) {
       case '1':
         if (guests.value !== '1') {
-          guests.setCustomValidity('Для одной комнаты может быть только 1 гость');
+          isNotValid = true;
         }
         break;
       case '2':
         if (['1', '2'].indexOf(guests.value) === -1) {
-          guests.setCustomValidity('Для двух комнат гостей может быть 1 или 2');
+          isNotValid = true;
         }
         break;
       case '3':
         if (guests.value === '0') {
-          guests.setCustomValidity('Для трех комнат гостей может быть от 1 до 3');
+          isNotValid = true;
         }
         break;
       case '100':
         if (guests.value !== '0') {
-          guests.setCustomValidity('100 комнат не для гостей');
+          isNotValid = true;
         }
         break;
       default:
-        guests.setCustomValidity('Невозможно определить количество гостей');
+        guests.setCustomValidity(MSG_CAPACITY_MAP['default']);
+    }
+    if (isNotValid) {
+      guests.setCustomValidity(MSG_CAPACITY_MAP[rooms.value]);
     }
   }
 
@@ -137,9 +150,8 @@
     element.setCustomValidity('');
     var files = element.files;
     for (var i = 0; i < files.length; i++) {
-      var fileType = files[i].type;
-      if (fileType.substr(0, 6) !== 'image/') {
-        element.setCustomValidity('Загруженный файл не является изображением');
+      if (!isImage(files[i])) {
+        element.setCustomValidity(MSG_IMAGE);
         break;
       }
     }
@@ -150,7 +162,7 @@
    */
   function setHandlers() {
     // Тип жилища должен влиять на цену
-    type.addEventListener('change', setTypePrice);
+    type.addEventListener('change', typePriceChangeHandler);
 
     // Время заезда и выезда должны быть синхронизированы
     // Время заезда
@@ -164,9 +176,9 @@
 
     // Количество комнат должно соответствовать количеству гостей
     // Комнаты
-    rooms.addEventListener('change', validateCapacity);
+    rooms.addEventListener('change', capacityChangeHandler);
     // Места (гости)
-    guests.addEventListener('change', validateCapacity);
+    guests.addEventListener('change', capacityChangeHandler);
 
     // Аватар пользователя
     avatar.addEventListener('change', function () {
@@ -197,7 +209,7 @@
     setTitle();
     setAddress();
     setPrice();
-    setTypePrice();
+    typePriceChangeHandler();
     setImages();
 
     // Добавление обработчиков событий
@@ -210,7 +222,7 @@
    */
   function validate() {
     validateTime();
-    validateCapacity();
+    capacityChangeHandler();
     validateImages(avatar);
     validateImages(images);
   }
