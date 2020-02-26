@@ -1,33 +1,28 @@
 'use strict';
 
 (function () {
-  // Импорт фунций из других модулей
+  // Импорт функций из других модулей
+  var format = window.util.format;
   var removeElements = window.util.removeElements;
 
   // Валюта
   var CURRENCY = '₽';
 
-  var REALTY_TYPES_MAP = {
+  var ROOM_WORDS = ['комнат', 'комната', 'комнаты'];
+  var GUEST_WORDS = ['гостей', 'гостя'];
+
+  // Шаблоны строк
+  var CAPACITY_TEMPLATE = '{1} {2} для {3} {4}';
+  var TIME_TEMPLATE = 'Заезд после {1}, выезд до {2}';
+
+  // Словарь: тип недвижимости - название на русском
+  // Б8. Использование объекта в качестве словаря
+  var realtyTypeToName = {
     flat: 'Квартира',
     bungalo: 'Бунгало',
     house: 'Дом',
     palace: 'Дворец'
   };
-
-  /**
- * Форматирование строковых шаблонов
- * В переданном шаблоне вхождения вида {n} заменяются на соответствующие по номеру (n) аргументы функции
- * Аргументы обрабатываются с 1, т.к. нулевой аргумент - это сам шаблон
- * Вызов функции: format('{1} + {2} = {3}', '10', '20', '30');
- * @param {String} s - шаблон строки
- * @return {String} отформатированная строка
- */
-  function format(s) {
-    for (var i = 1; i < arguments.length; i++) {
-      s = s.replace('{' + i + '}', arguments[i]);
-    }
-    return s;
-  }
 
   /**
    * На основе переданного числа функция выбирает одно из 3х переданных слов
@@ -68,14 +63,14 @@
    * @return {String} отформатированная строка
    */
   function formatCapacity(values) {
-    var roomWord = getNominativeCase(values[0], ['комнат', 'комната', 'комнаты']);
-    var guestWord = getGenitiveCase(values[1], ['гостей', 'гостя']);
-    return format('{1} {2} для {3} {4}', values[0], roomWord, values[1], guestWord);
+    var roomWord = getNominativeCase(values[0], ROOM_WORDS);
+    var guestWord = getGenitiveCase(values[1], GUEST_WORDS);
+    return format(CAPACITY_TEMPLATE, values[0], roomWord, values[1], guestWord);
   }
 
   /**
    * Проверка объекта на наличие значения:
-   * он не должен быть пустой строкой, нулем, null, undefined, NaN
+   * он не должен быть пустой строкой, null, undefined, NaN
    * Если это массив, то он должен быть непустым, и каждый его элемент также проверяется.
    * @param {Object} value - может быть объектом или массивом
    * @return {Boolean} значение есть / нет
@@ -195,7 +190,7 @@
  * @param {Object} noticeData - объект данных объявления
  * @return {HTMLElement} DOM-элемент карточки
  */
-  function createCard(noticeData) {
+  function create(noticeData) {
     // Получаем шаблон карточки объявления
     var template = document.querySelector('#card').content.querySelector('.popup');
     // Создаем DOM-элемент карточки
@@ -218,7 +213,7 @@
 
     // Тип жилья
     processElement(cardElement.querySelector('.popup__type'), offer.type, function (value) {
-      return REALTY_TYPES_MAP[value];
+      return realtyTypeToName[value];
     });
 
     // Количество гостей и комнат
@@ -226,7 +221,7 @@
 
     // Время заезда и выезда
     processElement(cardElement.querySelector('.popup__text--time'), [offer.checkin, offer.checkout], function (values) {
-      return format('Заезд после {1}, выезд до {2}', values[0], values[1]);
+      return format(TIME_TEMPLATE, values[0], values[1]);
     });
 
     // Удобства (особенности) жилья
@@ -246,7 +241,7 @@
 
   // Экспорт функций модуля
   window.card = {
-    createCard: createCard
+    create: create
   };
 
 })();

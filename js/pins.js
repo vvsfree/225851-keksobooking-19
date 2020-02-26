@@ -1,6 +1,9 @@
 'use strict';
 
 (function () {
+  // Импорт функций из других модулей
+  var setPosition = window.util.setPosition;
+
   // Размеры метки на карте
   var PIN_WIDTH = 50;
   var PIN_HEIGHT = 70;
@@ -15,9 +18,11 @@
     var pinElement = template.cloneNode(true);
 
     // Определяем местоположение метки на карте
-    var x = noticeData.location.x - PIN_WIDTH / 2;
-    var y = noticeData.location.y - PIN_HEIGHT;
-    pinElement.style = 'left: ' + x + 'px; top: ' + y + 'px;';
+    var position = {
+      x: noticeData.location.x - PIN_WIDTH / 2,
+      y: noticeData.location.y - PIN_HEIGHT
+    };
+    setPosition(pinElement, position);
 
     // Инициализируем свойства аватара автора
     var imgElement = pinElement.querySelector('img');
@@ -35,7 +40,7 @@
    * @param {Function} placeCard - функция отображения карточки
    * @return {DocumentFragment} фрагмент документа
    */
-  function createPins(data, placeCard) {
+  function create(data, placeCard) {
     var template = document.querySelector('#pin').content.querySelector('.map__pin');
     var fragment = document.createDocumentFragment();
 
@@ -57,8 +62,8 @@
   }
 
   // Экспорт функций модуля
-  window.pin = {
-    createPins: createPins
+  window.pins = {
+    create: create
   };
 
 })();

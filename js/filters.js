@@ -8,6 +8,16 @@
   // Максимальное количество пинов на карте
   // ТЗ 5.8. Не более 5ти меток на карте
   var MAX_PIN_COUNT = 5;
+  var LOW_PRICE_LIMIT = 10000;
+  var HIGH_PRICE_LIMIT = 50000;
+  var ANY_FILTER_VALUE = 'any';
+
+  // Значения фильтра ценового диапазона
+  var PriceType = {
+    LOW: 'low',
+    MIDDLE: 'middle',
+    HIGH: 'high'
+  };
 
   // Нефильтрованные данные объявлений
   var rawData = [];
@@ -79,7 +89,7 @@
    * @return {Boolean} результат проверки
    */
   function checkValue(offerValue, filterValue, check) {
-    if (filterValue === 'any') {
+    if (filterValue === ANY_FILTER_VALUE) {
       return true;
     }
     if (check) {
@@ -127,16 +137,16 @@
   function checkPriceValue(offerValue, filterValue) {
     // Данные могут прийти неполными, значение может быть undefined, null
     if (offerValue || offerValue === 0) {
-      if (offerValue < 10000) {
-        if (filterValue === 'low') {
+      if (offerValue < LOW_PRICE_LIMIT) {
+        if (filterValue === PriceType.LOW) {
           return true;
         }
-      } else if (offerValue > 50000) {
-        if (filterValue === 'high') {
+      } else if (offerValue > HIGH_PRICE_LIMIT) {
+        if (filterValue === PriceType.HIGH) {
           return true;
         }
       } else {
-        if (filterValue === 'middle') {
+        if (filterValue === PriceType.MIDDLE) {
           return true;
         }
       }
@@ -216,10 +226,10 @@
 
   // Экспорт функций модуля
   window.filters = {
-    activateFilter: function () {
+    activate: function () {
       setFilterState(true);
     },
-    deactivateFilter: function () {
+    deactivate: function () {
       setFilterState(false);
     },
     load: load,

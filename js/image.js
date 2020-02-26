@@ -5,6 +5,7 @@
   var removeElements = window.util.removeElements;
   var isImage = window.util.isImage;
 
+  var IMAGE_SIZE = 70;
   var INVALID_IMAGE_ALT = 'Неверный формат файла';
 
   // Аватар пользователя
@@ -97,11 +98,12 @@
     removePhotos();
 
     var fragment = document.createDocumentFragment();
+    // FileList псевдомассив, не получается использовать forEach
     for (var i = 0; i < files.length; i++) {
       var photoElement = photoPreview.cloneNode(true);
       var imageElement = readFile(files[i], document.createElement('img'));
-      imageElement.width = '70';
-      imageElement.height = '70';
+      imageElement.width = IMAGE_SIZE;
+      imageElement.height = IMAGE_SIZE;
       photoElement.appendChild(imageElement);
       fragment.appendChild(photoElement);
     }

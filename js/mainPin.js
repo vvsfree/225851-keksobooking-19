@@ -3,6 +3,7 @@
 (function () {
   // Импорт функций из других модулей
   var setAddress = window.form.setAddress;
+  var setPosition = window.util.setPosition;
 
   // Длина ножки главной метки
   var MAIN_PIN_LEG_HEIGHT = 16;
@@ -19,14 +20,20 @@
   var mainPin = document.querySelector('.map__pin--main');
 
   // Исходная позиция метки на карте
-  var initialPosition = getPinCoords();
+  var initialPosition = {
+    x: mainPin.offsetLeft,
+    y: mainPin.offsetTop
+  };
 
   /**
    * Вычисление координат главной метки
    * Эта функция должна вызываться, когда метка имеет ножку - ее основное состояние
-   * Координаты метки - точка, куда указывает острие ножки
    * Предполагается, что по горизонтали ножка находится посредине метки
    * Если позиция метки не передана, то берется текущая из DOM
+   * -
+   * Примечание:
+   *  позиция - это CSS position (left, top) элемента на странице
+   *  координаты - точка, куда указывает ножка метки
    * @param {Object} position - позиция элемента метки (left, top)
    * @return {Object} - координаты метки (x, y)
    */
@@ -88,10 +95,9 @@
    * Сбрасываем главную метку в исходное состояние
    * @param {Function} clickHandler - обработчик
    */
-  function resetPin(clickHandler) {
+  function reset(clickHandler) {
     // Сбрасываем позицию главной метки в исходное состояние
-    mainPin.style.left = initialPosition.x + 'px';
-    mainPin.style.top = initialPosition.y + 'px';
+    setPosition(mainPin, initialPosition);
 
     // Главная метка с самого начала круглая или
     // становится круглой при деактивации и при этом возвращается в исходное место на карте
@@ -114,8 +120,8 @@
    */
   function mouseDownHandler(evt) {
     evt.preventDefault();
-    // Начальные координаты мыши
-    var startCoords = {
+    // Начальное положение мыши
+    var startMousePosition = {
       x: evt.clientX,
       y: evt.clientY
     };
@@ -125,24 +131,21 @@
 
     /**
      * Обработчик события mousemove: перемещение мыши
-     * Примечание:
-     *  позиция - это CSS position (left, top) элемента на странице
-     *  координаты - точка, куда указывает ножка метки
      * @param {Event} moveEvt - событие
      */
     function mouseMoveHandler(moveEvt) {
       moveEvt.preventDefault();
 
-      // Координаты мыши после перемещения
-      var mouseCoords = {
+      // Положение мыши после перемещения
+      var currentMousePosition = {
         x: moveEvt.clientX,
         y: moveEvt.clientY
       };
 
-      // Дельта координат мыши
+      // Дельта нового положения мыши
       var shift = {
-        x: startCoords.x - mouseCoords.x,
-        y: startCoords.y - mouseCoords.y
+        x: startMousePosition.x - currentMousePosition.x,
+        y: startMousePosition.y - currentMousePosition.y
       };
 
       // Новая возможная позиция метки на странице
@@ -155,14 +158,13 @@
       pinPosition = correctPinPosition(pinPosition, mapWidth);
 
       // Перемещаем метку задавая ей новую позицию на карте
-      mainPin.style.left = pinPosition.x + 'px';
-      mainPin.style.top = pinPosition.y + 'px';
+      setPosition(mainPin, pinPosition);
 
       // Задаем координаты метки в форме
       setAddress(getPinCoords(pinPosition));
 
-      // Запоминаем новые координаты мыши
-      startCoords = mouseCoords;
+      // Запоминаем новое положение мыши
+      startMousePosition = currentMousePosition;
     }
 
     /**
@@ -183,8 +185,7 @@
   // Экспорт функций модуля
   window.mainPin = {
     mouseDownHandler: mouseDownHandler,
-    getPinCoords: getPinCoords,
-    getRoundPinCoords: getRoundPinCoords,
-    resetPin: resetPin
+    getCoords: getPinCoords,
+    reset: reset
   };
 })();

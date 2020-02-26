@@ -1,11 +1,20 @@
 'use strict';
 
 (function () {
-  var URL = 'https://js.dump.academy/keksobooking';
+  // Импорт функций из других модулей
+  var format = window.util.format;
+
+  var POST_URL = 'https://js.dump.academy/keksobooking';
+  var GET_URL = POST_URL + '/data';
   var TIMEOUT_IN_MS = 10000;
   var StatusCode = {
     OK: 200
   };
+
+  // Сообщения пользователю
+  var CONNECT_ERROR = 'Произошла ошибка соединения';
+  var STATUS_TEMPLATE = 'Статус ответа: {1} {2}';
+  var TIMEOUT_TEMPLATE = 'Запрос не успел выполниться за {1} мс';
 
   /**
    * Подготовка запроса
@@ -22,16 +31,16 @@
       if (xhr.status === StatusCode.OK) {
         onLoad(xhr.response);
       } else {
-        onError('Статус ответа: ' + xhr.status + ' ' + xhr.statusText);
+        onError(format(STATUS_TEMPLATE, xhr.status, xhr.statusText));
       }
     });
 
     xhr.addEventListener('error', function () {
-      onError('Произошла ошибка соединения');
+      onError(CONNECT_ERROR);
     });
 
     xhr.addEventListener('timeout', function () {
-      onError('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
+      onError(format(TIMEOUT_TEMPLATE, xhr.timeout));
     });
 
     xhr.timeout = TIMEOUT_IN_MS;
@@ -45,7 +54,7 @@
    */
   function load(onLoad, onError) {
     var xhr = prepareRequest(onLoad, onError);
-    xhr.open('GET', URL + '/data');
+    xhr.open('GET', GET_URL);
     xhr.send();
   }
 
@@ -57,7 +66,7 @@
    */
   function save(data, onLoad, onError) {
     var xhr = prepareRequest(onLoad, onError);
-    xhr.open('POST', URL);
+    xhr.open('POST', POST_URL);
     xhr.send(data);
   }
 

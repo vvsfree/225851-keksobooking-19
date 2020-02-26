@@ -23,19 +23,17 @@
    * @param {Boolean} isActive - true: устанавливается активное состояние; false: неактивное
    */
   function setFormState(isActive) {
-    var adForm = document.querySelector('.ad-form');
-
     var disabledFormClassName = 'ad-form--disabled';
     if (isActive) {
-      adForm.classList.remove(disabledFormClassName);
+      form.classList.remove(disabledFormClassName);
     } else {
-      if (!adForm.classList.contains(disabledFormClassName)) {
-        adForm.classList.add(disabledFormClassName);
+      if (!form.classList.contains(disabledFormClassName)) {
+        form.classList.add(disabledFormClassName);
       }
     }
 
     // fieldsets формы устанавливаются в необходимое состояние
-    var addFormElements = adForm.querySelectorAll('.ad-form__element, .ad-form-header');
+    var addFormElements = form.querySelectorAll('.ad-form__element, .ad-form-header');
     addFormElements.forEach(function (item) {
       item.disabled = !isActive;
     });
@@ -44,7 +42,7 @@
   /**
    * Активация формы
    */
-  function activateForm() {
+  function activate() {
     setFormState(true);
     validate();
   }
@@ -52,7 +50,7 @@
   /**
    * Деактивация формы
    */
-  function deactivateForm() {
+  function deactivate() {
     setFormState(false);
     resetImages();
   }
@@ -71,7 +69,7 @@
   /**
    * Сброс страницы с предварительным сбросом формы
    * Вызывается в двух местах, удобно объединить в одну функцию
-   * @requires window.map.deactivateMap
+   * @requires window.map.deactivate
    */
   function resetPage() {
     form.reset();
@@ -81,8 +79,8 @@
     // Сомнения в том, что это неявный импорт, во первых
     // Во-вторых, взаимозависимость модулей:
     // карта импортирует несколько функций у формы, а форма при этом импортирует функцию у карты
-    window.map.deactivateMap();
-    deactivateForm();
+    window.map.deactivate();
+    deactivate();
   }
 
   /**
@@ -118,8 +116,8 @@
 
   // Экспорт функций модуля
   window.form = {
-    activateForm: activateForm,
-    deactivateForm: deactivateForm,
+    activate: activate,
+    deactivate: deactivate,
     setAddress: setAddress
   };
 

@@ -9,20 +9,27 @@
   var TITLE_MAX_LENGTH = 100;
   var IMAGE_ACCEPT_VALUE = 'image/*';
   var PRICE_MAX_VALUE = 1000000;
-  var PRICE_MAP = {
+
+  // Сообщения об ошибке
+  var MSG_TIME = 'Время заезда и выезда должны быть синхронизированы';
+  var MSG_IMAGE = 'Загруженный файл не является изображением';
+  var MSG_GUESTS = 'Невозможно определить количество гостей';
+
+  // Словарь (сопоставление): тип недвижимости - минимальная цена
+  // Б8. Использование объекта в качестве словаря
+  var realtyTypeToMinPrice = {
     bungalo: 0,
     flat: 1000,
     house: 5000,
     palace: 10000
   };
-  var MSG_TIME = 'Время заезда и выезда должны быть синхронизированы';
-  var MSG_IMAGE = 'Загруженный файл не является изображением';
-  var MSG_CAPACITY_MAP = {
-    '1': 'Для одной комнаты может быть только 1 гость',
-    '2': 'Для двух комнат гостей может быть 1 или 2',
-    '3': 'Для трех комнат гостей может быть от 1 до 3',
-    '100': '100 комнат не для гостей',
-    'default': 'Невозможно определить количество гостей'
+
+  // Словарь: количество комнат - объект валидации количества гостей
+  var roomsToGuestsValidity = {
+    1: new GuestsValidity(1, 1, 'Для одной комнаты может быть только 1 гость'),
+    2: new GuestsValidity(1, 2, 'Для двух комнат гостей может быть 1 или 2'),
+    3: new GuestsValidity(1, 3, 'Для трех комнат гостей может быть от 1 до 3'),
+    100: new GuestsValidity(0, 0, '100 комнат не для гостей')
   };
 
   // Инициализация переменных необходимых для работы модуля
@@ -50,6 +57,18 @@
   var avatar = adForm.querySelector('#avatar');
   // Фотографии жилья
   var images = adForm.querySelector('#images');
+
+  /**
+   * Объект валидации количества гостей
+   * @param {Number} min - минимальное количество гостей
+   * @param {Number} max - максимальное количество гостей
+   * @param {String} message - сообщение об ошибке (валидация не прошла)
+   */
+  function GuestsValidity(min, max, message) {
+    this.min = min;
+    this.max = max;
+    this.message = message;
+  }
 
   /**
    * Для поля "Заголовок объявления" устанавливается минимальная и максимальная длина,
@@ -91,7 +110,7 @@
    * Поле «Тип жилья» влияет на минимальное значение поля «Цена за ночь» и на его placeholder
    */
   function typePriceChangeHandler() {
-    price.min = PRICE_MAP[type.value];
+    price.min = realtyTypeToMinPrice[type.value];
     price.placeholder = price.min;
   }
 
@@ -110,34 +129,14 @@
    * Проверяется соответствие количества гостей (спальных мест) и количества комнат
    */
   function capacityChangeHandler() {
-    var isNotValid = false;
     guests.setCustomValidity('');
-    switch (rooms.value) {
-      case '1':
-        if (guests.value !== '1') {
-          isNotValid = true;
-        }
-        break;
-      case '2':
-        if (['1', '2'].indexOf(guests.value) === -1) {
-          isNotValid = true;
-        }
-        break;
-      case '3':
-        if (guests.value === '0') {
-          isNotValid = true;
-        }
-        break;
-      case '100':
-        if (guests.value !== '0') {
-          isNotValid = true;
-        }
-        break;
-      default:
-        guests.setCustomValidity(MSG_CAPACITY_MAP['default']);
-    }
-    if (isNotValid) {
-      guests.setCustomValidity(MSG_CAPACITY_MAP[rooms.value]);
+    if (rooms.value in roomsToGuestsValidity) {
+      var guestsValidity = roomsToGuestsValidity[rooms.value];
+      if (guestsValidity.min > guests.value || guestsValidity.max < guests.value) {
+        guests.setCustomValidity(guestsValidity.message);
+      }
+    } else {
+      guests.setCustomValidity(MSG_GUESTS);
     }
   }
 
